@@ -11,6 +11,13 @@ const ItemGroup: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [groups, setGroups] = useState<GroupItem[]>([
     { sl: 1, name: 'Maintenance Item', description: 'Used for equipment and facility upkeep' },
+    { sl: 2, name: 'Paint Item', description: 'Paints, chemical coatings, and solvents' },
+    { sl: 3, name: 'Civil Item', description: 'Construction and structural maintenance materials' },
+    { sl: 4, name: 'Admin Item', description: 'Office and administrative supplies' },
+    { sl: 5, name: 'Assembly Item', description: 'Components used in the production assembly line' },
+    { sl: 6, name: 'Assets & Machinery', description: 'Long-term capital equipment and machinery' },
+    { sl: 7, name: 'IT Item', description: 'Computers, networking, and technology accessories' },
+    { sl: 8, name: 'Safety Item', description: 'Personal protective equipment and safety gear' },
   ]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
