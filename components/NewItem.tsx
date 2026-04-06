@@ -12,7 +12,6 @@ const NewItem: React.FC<NewItemProps> = ({ onBack, onSuccess, initialData }) => 
   const [loading, setLoading] = useState(false);
   const [masterData, setMasterData] = useState({
     uoms: [] as string[],
-    groups: [] as string[],
     types: [] as string[],
     locations: [] as string[],
     sources: [] as string[],
@@ -24,7 +23,6 @@ const NewItem: React.FC<NewItemProps> = ({ onBack, onSuccess, initialData }) => 
     sku: '',
     uom: '',
     location: '',
-    group_name: '',
     type: '',
     source: '',
     department: '',
@@ -33,8 +31,9 @@ const NewItem: React.FC<NewItemProps> = ({ onBack, onSuccess, initialData }) => 
     avg_price: '0.00',
     safety_stock: '0',
     on_hand_stock: '0',
-    batch_number: '',
-    expiry_date: ''
+    expiry_date: '',
+    last_issued: '',
+    last_received: ''
   });
 
   useEffect(() => {
@@ -64,20 +63,18 @@ const NewItem: React.FC<NewItemProps> = ({ onBack, onSuccess, initialData }) => 
     const fetchMasterData = async () => {
       // Default values as fallback/initial
       const defaultUoms = ['PCS', 'SET', 'BOX', 'ROLL', 'LTR', 'MTR', 'KG', 'PACK', 'BAG', 'PAIR', 'FEET', 'REAM', 'CYL', 'CAN', 'BOTTLE', 'LOT'];
-      const defaultGroups = ['Maintenance Item', 'Paint Item', 'Civil Item', 'Admin Item', 'Assembly Item', 'Assets & Machinery', 'IT Item', 'Safety Item'];
       const defaultTypes = ['Consumables', 'Spare Parts', 'Raw Materials', 'Finished Goods', 'Tools', 'Equipment'];
       const defaultSources = ['Local', 'Import', 'Internal'];
 
       try {
         const { data: items } = await supabase
           .from('items')
-          .select('uom, group_name, type, location, source, department');
+          .select('uom, type, location, source, department');
         
         const { data: costCenters } = await supabase.from('cost_centers').select('name');
         
         if (items) {
           const uoms = Array.from(new Set([...defaultUoms, ...items.map(i => i.uom).filter(Boolean)])).sort();
-          const groups = Array.from(new Set([...defaultGroups, ...items.map(i => i.group_name).filter(Boolean)])).sort();
           const types = Array.from(new Set([...defaultTypes, ...items.map(i => i.type).filter(Boolean)])).sort();
           const locations = Array.from(new Set(items.map(i => i.location).filter(Boolean))).sort();
           const sources = Array.from(new Set([...defaultSources, ...items.map(i => i.source).filter(Boolean)])).sort();
@@ -86,11 +83,10 @@ const NewItem: React.FC<NewItemProps> = ({ onBack, onSuccess, initialData }) => 
           const deptsFromCC = costCenters?.map(cc => cc.name) || [];
           const departments = Array.from(new Set([...deptsFromItems, ...deptsFromCC])).sort();
 
-          setMasterData({ uoms, groups, types, locations, sources, departments });
+          setMasterData({ uoms, types, locations, sources, departments });
         } else {
           setMasterData({
             uoms: defaultUoms.sort(),
-            groups: defaultGroups.sort(),
             types: defaultTypes.sort(),
             locations: [],
             sources: defaultSources.sort(),
@@ -114,7 +110,6 @@ const NewItem: React.FC<NewItemProps> = ({ onBack, onSuccess, initialData }) => 
           sku: initialData.sku || '',
           uom: initialData.uom || '',
           location: initialData.location || '',
-          group_name: initialData.group_name || '',
           type: initialData.type || '',
           source: initialData.source || '',
           department: initialData.department || '',
@@ -123,8 +118,9 @@ const NewItem: React.FC<NewItemProps> = ({ onBack, onSuccess, initialData }) => 
           avg_price: String(initialData.avg_price || '0.00'),
           safety_stock: String(initialData.safety_stock || '0'),
           on_hand_stock: String(initialData.on_hand_stock || '0'),
-          batch_number: initialData.batch_number || '',
-          expiry_date: initialData.expiry_date || ''
+          expiry_date: initialData.expiry_date || '',
+          last_issued: initialData.last_issued ? new Date(initialData.last_issued).toISOString().split('T')[0] : '',
+          last_received: initialData.last_received ? new Date(initialData.last_received).toISOString().split('T')[0] : ''
         });
       }, 0);
       return () => clearTimeout(timer);
@@ -137,7 +133,7 @@ const NewItem: React.FC<NewItemProps> = ({ onBack, onSuccess, initialData }) => 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.uom || !formData.group_name || !formData.type || !formData.code) {
+    if (!formData.name || !formData.uom || !formData.type || !formData.code) {
       alert("Please fill in all mandatory fields (*)");
       return;
     }
@@ -149,7 +145,10 @@ const NewItem: React.FC<NewItemProps> = ({ onBack, onSuccess, initialData }) => 
       last_price: parseFloat(formData.last_price) || 0,
       avg_price: parseFloat(formData.avg_price) || 0,
       safety_stock: parseInt(formData.safety_stock) || 0,
-      on_hand_stock: parseInt(formData.on_hand_stock) || 0
+      on_hand_stock: parseInt(formData.on_hand_stock) || 0,
+      expiry_date: formData.expiry_date || null,
+      last_issued: formData.last_issued || null,
+      last_received: formData.last_received || null
     };
 
     let error;
@@ -264,21 +263,6 @@ const NewItem: React.FC<NewItemProps> = ({ onBack, onSuccess, initialData }) => 
               </div>
               <div className="space-y-1.5">
                 <label className="text-[11px] font-black text-[#2d808e] uppercase tracking-tighter">
-                  <span className="text-red-500 mr-1">*</span>Item Group
-                </label>
-                <select
-                  value={formData.group_name}
-                  onChange={(e) => handleInputChange('group_name', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded text-[12px] font-bold outline-none focus:border-[#2d808e] transition-all appearance-none cursor-pointer"
-                >
-                  <option value="">SELECT GROUP</option>
-                  {masterData.groups.map(group => (
-                    <option key={group} value={group}>{group}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-black text-[#2d808e] uppercase tracking-tighter">
                   <span className="text-red-500 mr-1">*</span>Item Type
                 </label>
                 <select
@@ -294,16 +278,21 @@ const NewItem: React.FC<NewItemProps> = ({ onBack, onSuccess, initialData }) => 
               </div>
               <div className="space-y-1.5">
                 <label className="text-[11px] font-black text-[#2d808e] uppercase tracking-tighter">Stock Location</label>
-                <select
-                  value={formData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded text-[12px] font-bold outline-none focus:border-[#2d808e] transition-all appearance-none cursor-pointer"
-                >
-                  <option value="">SELECT LOCATION</option>
-                  {masterData.locations.map(loc => (
-                    <option key={loc} value={loc}>{loc}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    list="location-list"
+                    placeholder="SELECT OR TYPE LOCATION"
+                    value={formData.location}
+                    onChange={(e) => handleInputChange('location', e.target.value.toUpperCase())}
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded text-[12px] font-bold outline-none focus:border-[#2d808e] transition-all"
+                  />
+                  <datalist id="location-list">
+                    {masterData.locations.map(loc => (
+                      <option key={loc} value={loc} />
+                    ))}
+                  </datalist>
+                </div>
               </div>
               <div className="space-y-1.5">
                 <label className="text-[11px] font-black text-[#2d808e] uppercase tracking-tighter">Source</label>
@@ -383,21 +372,29 @@ const NewItem: React.FC<NewItemProps> = ({ onBack, onSuccess, initialData }) => 
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-black text-[#2d808e] uppercase tracking-tighter">Batch Number</label>
-                <input
-                  type="text"
-                  placeholder="e.g. BATCH-001"
-                  value={formData.batch_number}
-                  onChange={(e) => handleInputChange('batch_number', e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded focus:border-[#2d808e] outline-none text-[12px] font-medium transition-all"
-                />
-              </div>
-              <div className="space-y-1.5">
                 <label className="text-[11px] font-black text-[#2d808e] uppercase tracking-tighter">Expiry Date</label>
                 <input
                   type="date"
                   value={formData.expiry_date}
                   onChange={(e) => handleInputChange('expiry_date', e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded focus:border-[#2d808e] outline-none text-[12px] font-medium transition-all"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-black text-[#2d808e] uppercase tracking-tighter">Last Issued</label>
+                <input
+                  type="date"
+                  value={formData.last_issued}
+                  onChange={(e) => handleInputChange('last_issued', e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-gray-200 rounded focus:border-[#2d808e] outline-none text-[12px] font-medium transition-all"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-black text-[#2d808e] uppercase tracking-tighter">Last Received</label>
+                <input
+                  type="date"
+                  value={formData.last_received}
+                  onChange={(e) => handleInputChange('last_received', e.target.value)}
                   className="w-full px-3 py-2 bg-white border border-gray-200 rounded focus:border-[#2d808e] outline-none text-[12px] font-medium transition-all"
                 />
               </div>

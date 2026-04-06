@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { Home, Trash2, Loader2, Save, Plus, CheckCircle2, X } from 'lucide-react';
+import { Home, Trash2, Loader2, Save, Plus, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import ItemSearchInput from './ItemSearchInput';
 
 interface IssueItem {
   id: string;
@@ -21,7 +22,6 @@ interface ManualIssueProps {
 
 const ManualIssue: React.FC<ManualIssueProps> = ({ onBack, onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadingSku, setLoadingSku] = useState<string | null>(null);
   const [showNotification, setShowNotification] = useState<any | null>(null);
   const [formData, setFormData] = useState({
     documentDate: new Date().toISOString().split('T')[0],
@@ -35,27 +35,6 @@ const ManualIssue: React.FC<ManualIssueProps> = ({ onBack, onSubmit }) => {
   const [items, setItems] = useState<IssueItem[]>([
     { id: '1', name: '', sku: '', uom: '', avgPrice: '', location: '', issueQty: '', remarks: '' }
   ]);
-
-  const handleSkuLookup = async (id: string, sku: string) => {
-    if (!sku) return;
-    setLoadingSku(id);
-    const { data, error } = await supabase
-      .from('items')
-      .select('*')
-      .eq('sku', sku)
-      .maybeSingle();
-
-    if (data && !error) {
-      setItems(prev => prev.map(item => item.id === id ? {
-        ...item,
-        name: data.name,
-        uom: data.uom,
-        avgPrice: String(data.avg_price || '0.00'),
-        location: data.location || '',
-      } : item));
-    }
-    setLoadingSku(null);
-  };
 
   const addItem = () => {
     setItems([...items, { id: Date.now().toString(), name: '', sku: '', uom: '', avgPrice: '', location: '', issueQty: '', remarks: '' }]);
@@ -237,13 +216,42 @@ const ManualIssue: React.FC<ManualIssueProps> = ({ onBack, onSubmit }) => {
                 {items.map((item) => (
                   <tr key={item.id}>
                     <td className="py-2 px-1">
-                      <div className="relative">
-                        <input type="text" placeholder="SKU..." className="w-full px-2 py-1.5 border border-[#2d808e]/30 rounded text-[11px] font-bold" value={item.sku} onChange={(e) => updateItem(item.id, 'sku', e.target.value)} onBlur={(e) => handleSkuLookup(item.id, e.target.value)} />
-                        {loadingSku === item.id && <Loader2 size={12} className="absolute right-1 top-2 animate-spin text-gray-400" />}
-                      </div>
+                      <ItemSearchInput
+                        value={item.sku}
+                        onChange={(val) => updateItem(item.id, 'sku', val)}
+                        onSelect={(data) => {
+                          setItems(prev => prev.map(i => i.id === item.id ? {
+                            ...i,
+                            sku: data.sku,
+                            name: data.name,
+                            uom: data.uom,
+                            avgPrice: String(data.avg_price || '0.00'),
+                            location: data.location || '',
+                          } : i));
+                        }}
+                        placeholder="SKU..."
+                        searchField="sku"
+                        className="w-full px-2 py-1.5 border border-[#2d808e]/30 rounded text-[11px] font-bold"
+                      />
                     </td>
                     <td className="py-2 px-1">
-                      <input type="text" className="w-full px-2 py-1.5 border border-gray-50 bg-gray-50 rounded text-[11px] font-bold" value={item.name} readOnly />
+                      <ItemSearchInput
+                        value={item.name}
+                        onChange={(val) => updateItem(item.id, 'name', val)}
+                        onSelect={(data) => {
+                          setItems(prev => prev.map(i => i.id === item.id ? {
+                            ...i,
+                            sku: data.sku,
+                            name: data.name,
+                            uom: data.uom,
+                            avgPrice: String(data.avg_price || '0.00'),
+                            location: data.location || '',
+                          } : i));
+                        }}
+                        placeholder="Item Name..."
+                        searchField="name"
+                        className="w-full px-2 py-1.5 border border-[#2d808e]/30 rounded text-[11px] font-bold"
+                      />
                     </td>
                     <td className="py-2 px-1 text-center">
                       <input type="text" className="w-full px-2 py-1.5 border border-gray-50 bg-gray-50 rounded text-[11px] text-center" value={item.uom} readOnly />

@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { Home, Plus, MinusCircle, Loader2, Save } from 'lucide-react';
+import { Home, Plus, MinusCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import GRNPreviewModal from './GRNPreviewModal';
+import ItemSearchInput from './ItemSearchInput';
 
 interface GRNItem {
   id: string;
@@ -15,7 +16,6 @@ interface GRNItem {
   masterLocation?: string;
   masterStock?: number;
   remarks: string;
-  batchNumber: string;
   expiryDate: string;
 }
 
@@ -26,7 +26,6 @@ interface ManualGRNProps {
 
 const ManualGRN: React.FC<ManualGRNProps> = ({ onBack, onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadingSku, setLoadingSku] = useState<string | null>(null);
   const [allLocations, setAllLocations] = useState<{name: string, count: number}[]>([]);
   const [allDepartments, setAllDepartments] = useState<string[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -47,7 +46,7 @@ const ManualGRN: React.FC<ManualGRNProps> = ({ onBack, onSubmit }) => {
         } else {
           setGrnId('4000000001');
         }
-      } catch (err) {
+      } catch (_) {
         setGrnId('4000000001');
       }
     };
@@ -89,35 +88,11 @@ const ManualGRN: React.FC<ManualGRNProps> = ({ onBack, onSubmit }) => {
   });
 
   const [items, setItems] = useState<GRNItem[]>([
-    { id: '1', name: '', sku: '', uom: '', unitPrice: '', recQty: '', location: '', remarks: '', batchNumber: '', expiryDate: '' }
+    { id: '1', name: '', sku: '', uom: '', unitPrice: '', recQty: '', location: '', remarks: '', expiryDate: '' }
   ]);
 
-  const handleSkuLookup = async (id: string, sku: string) => {
-    if (!sku) return;
-    setLoadingSku(id);
-    const { data, error } = await supabase
-      .from('items')
-      .select('*')
-      .eq('sku', sku)
-      .maybeSingle();
-
-    if (data && !error) {
-      const locationDisplay = data.location ? `${data.location} (${data.on_hand_stock || 0})` : '';
-      setItems(prev => prev.map(item => item.id === id ? {
-        ...item,
-        name: data.name,
-        uom: data.uom,
-        unitPrice: String(data.last_price || '0.00'),
-        location: locationDisplay,
-        masterLocation: data.location,
-        masterStock: data.on_hand_stock
-      } : item));
-    }
-    setLoadingSku(null);
-  };
-
   const addItem = () => {
-    setItems([...items, { id: Date.now().toString(), name: '', sku: '', uom: '', unitPrice: '', recQty: '', location: '', remarks: '', batchNumber: '', expiryDate: '' }]);
+    setItems([...items, { id: Date.now().toString(), name: '', sku: '', uom: '', unitPrice: '', recQty: '', location: '', remarks: '', expiryDate: '' }]);
   };
 
   const removeItem = (id: string) => {
@@ -152,6 +127,8 @@ const ManualGRN: React.FC<ManualGRNProps> = ({ onBack, onSubmit }) => {
         items: items
       }]);
 
+      if (grnError) throw grnError;
+
       // 2. Logic to update master inventory stock
       for (const item of items) {
         const qty = parseInt(item.recQty) || 0;
@@ -171,8 +148,7 @@ const ManualGRN: React.FC<ManualGRNProps> = ({ onBack, onSubmit }) => {
             last_received_qty: qty,
             last_received_date: new Date().toISOString(),
             cost_center: formData.department || 'N/A',
-            batch_number: item.batchNumber,
-            expiry_date: item.expiryDate
+            expiry_date: item.expiryDate || null
           })
           .eq('sku', item.sku);
         
@@ -375,7 +351,6 @@ const ManualGRN: React.FC<ManualGRNProps> = ({ onBack, onSubmit }) => {
                   <th className="pb-2 px-1 w-[100px]">UOM</th>
                   <th className="pb-2 px-1 w-[120px]">Unit Price</th>
                   <th className="pb-2 px-1 w-[100px]">Rec. Qty</th>
-                  <th className="pb-2 px-1 w-[150px]">Batch No</th>
                   <th className="pb-2 px-1 w-[150px]">Expiry Date</th>
                   <th className="pb-2 px-1 w-[180px]">Location</th>
                   <th className="pb-2 px-1">Remarks</th>
@@ -386,26 +361,48 @@ const ManualGRN: React.FC<ManualGRNProps> = ({ onBack, onSubmit }) => {
                 {items.map((item) => (
                   <tr key={item.id} className="group border-b border-gray-50 last:border-0">
                     <td className="py-2 px-1">
-                      <input 
-                        type="text" 
-                        placeholder="Item name"
+                      <ItemSearchInput
                         value={item.name}
-                        onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                        onChange={(val) => updateItem(item.id, 'name', val)}
+                        onSelect={(data) => {
+                          const locationDisplay = data.location ? `${data.location} (${data.on_hand_stock || 0})` : '';
+                          setItems(prev => prev.map(i => i.id === item.id ? {
+                            ...i,
+                            sku: data.sku,
+                            name: data.name,
+                            uom: data.uom,
+                            unitPrice: String(data.last_price || '0.00'),
+                            location: locationDisplay,
+                            masterLocation: data.location,
+                            masterStock: data.on_hand_stock
+                          } : i));
+                        }}
+                        placeholder="Item name"
+                        searchField="name"
                         className="w-full px-3 py-1.5 border border-cyan-700/30 rounded text-[11px] outline-none placeholder-gray-200"
                       />
                     </td>
                     <td className="py-2 px-1">
-                      <div className="relative">
-                        <input 
-                          type="text" 
-                          placeholder="SKU/Code"
-                          value={item.sku}
-                          onChange={(e) => updateItem(item.id, 'sku', e.target.value)}
-                          onBlur={(e) => handleSkuLookup(item.id, e.target.value)}
-                          className="w-full px-3 py-1.5 border border-cyan-700/30 rounded text-[11px] outline-none placeholder-gray-200 bg-gray-50/30 font-bold"
-                        />
-                        {loadingSku === item.id && <Loader2 size={12} className="absolute right-1 top-2.5 animate-spin text-gray-400" />}
-                      </div>
+                      <ItemSearchInput
+                        value={item.sku}
+                        onChange={(val) => updateItem(item.id, 'sku', val)}
+                        onSelect={(data) => {
+                          const locationDisplay = data.location ? `${data.location} (${data.on_hand_stock || 0})` : '';
+                          setItems(prev => prev.map(i => i.id === item.id ? {
+                            ...i,
+                            sku: data.sku,
+                            name: data.name,
+                            uom: data.uom,
+                            unitPrice: String(data.last_price || '0.00'),
+                            location: locationDisplay,
+                            masterLocation: data.location,
+                            masterStock: data.on_hand_stock
+                          } : i));
+                        }}
+                        placeholder="SKU/Code"
+                        searchField="sku"
+                        className="w-full px-3 py-1.5 border border-cyan-700/30 rounded text-[11px] outline-none placeholder-gray-200 bg-white font-bold"
+                      />
                     </td>
                     <td className="py-2 px-1">
                       <input 
@@ -432,15 +429,6 @@ const ManualGRN: React.FC<ManualGRNProps> = ({ onBack, onSubmit }) => {
                         value={item.recQty}
                         onChange={(e) => updateItem(item.id, 'recQty', e.target.value)}
                         className="w-full px-3 py-1.5 border border-cyan-700/30 rounded text-[11px] outline-none placeholder-gray-200 text-center font-black"
-                      />
-                    </td>
-                    <td className="py-2 px-1">
-                      <input 
-                        type="text" 
-                        placeholder="Batch No"
-                        value={item.batchNumber}
-                        onChange={(e) => updateItem(item.id, 'batchNumber', e.target.value)}
-                        className="w-full px-3 py-1.5 border border-cyan-700/30 rounded text-[11px] outline-none placeholder-gray-200"
                       />
                     </td>
                     <td className="py-2 px-1">

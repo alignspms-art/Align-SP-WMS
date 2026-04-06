@@ -64,7 +64,6 @@ export const PERMISSION_MODULES: ModuleConfig[] = [
   // Item Master Data
   { id: 'item_list', label: 'Item List', category: 'Item Master Data' },
   { id: 'item_uom', label: 'Item UOM', category: 'Item Master Data' },
-  { id: 'item_group', label: 'Item Group', category: 'Item Master Data' },
   { id: 'item_type', label: 'Item Type', category: 'Item Master Data' },
   { id: 'cost_center', label: 'Cost Center', category: 'Item Master Data' },
   

@@ -20,7 +20,6 @@ interface GRNItem {
   masterLocation?: string;
   masterStock?: number;
   remarks: string;
-  batchNumber: string;
   expiryDate: string;
 }
 
@@ -48,7 +47,7 @@ const MakeGRNForm: React.FC<MakeGRNFormProps> = ({ selectedItems, onClose, onSub
   useEffect(() => {
     const fetchNextGrnId = async () => {
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('grns')
           .select('grn_no')
           .order('grn_no', { ascending: false })
@@ -60,7 +59,7 @@ const MakeGRNForm: React.FC<MakeGRNFormProps> = ({ selectedItems, onClose, onSub
         } else {
           setGrnId('4000000001');
         }
-      } catch (err) {
+      } catch (_) {
         setGrnId('4000000001');
       }
     };
@@ -114,7 +113,6 @@ const MakeGRNForm: React.FC<MakeGRNFormProps> = ({ selectedItems, onClose, onSub
           masterLocation: master.location,
           masterStock: master.stock,
           remarks: '',
-          batchNumber: '',
           expiryDate: ''
         };
       });
@@ -178,8 +176,7 @@ const MakeGRNForm: React.FC<MakeGRNFormProps> = ({ selectedItems, onClose, onSub
             last_received_qty: Number(item.grnQty),
             last_received_date: new Date().toISOString(),
             cost_center: item.reqDept || 'N/A',
-            batch_number: item.batchNumber,
-            expiry_date: item.expiryDate
+            expiry_date: item.expiryDate || null
           })
           .eq('sku', item.sku);
         
@@ -362,7 +359,6 @@ const MakeGRNForm: React.FC<MakeGRNFormProps> = ({ selectedItems, onClose, onSub
                   <th className="px-4 py-4 text-center">Already Recevied</th>
                   <th className="px-4 py-4 text-center">GRN Price</th>
                   <th className="px-4 py-4 text-center">GRN Qty</th>
-                  <th className="px-4 py-4">Batch No</th>
                   <th className="px-4 py-4">Expiry Date</th>
                   <th className="px-4 py-4">Receive Location</th>
                   <th className="px-4 py-4">GRN Remarks</th>
@@ -391,15 +387,6 @@ const MakeGRNForm: React.FC<MakeGRNFormProps> = ({ selectedItems, onClose, onSub
                         value={item.grnQty}
                         onChange={(e) => updateItem(item.id, 'grnQty', Number(e.target.value))}
                         className="w-20 px-2 py-1 border border-gray-100 rounded text-center outline-none focus:border-[#2d808e] bg-gray-50/30"
-                      />
-                    </td>
-                    <td className="px-4 py-5">
-                      <input 
-                        type="text" 
-                        placeholder="Batch No"
-                        value={item.batchNumber}
-                        onChange={(e) => updateItem(item.id, 'batchNumber', e.target.value)}
-                        className="w-full px-3 py-1.5 border border-gray-100 rounded text-[12px] outline-none focus:border-[#2d808e] bg-gray-50/30"
                       />
                     </td>
                     <td className="px-4 py-5">

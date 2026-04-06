@@ -57,6 +57,7 @@ const MOPrintTemplate: React.FC<MOPrintTemplateProps> = ({ mo }) => {
           <p className="flex"><span className="w-24 shrink-0">Updated At:</span> <span className="font-medium text-gray-700">{formatDate(mo.updated_at || mo.created_at)}</span></p>
           <p className="flex"><span className="w-24 shrink-0">Status:</span> <span className="font-medium text-emerald-600">{mo.status || 'Pending'}</span></p>
           <p className="flex"><span className="w-24 shrink-0">Updated By:</span> <span className="font-medium text-gray-700">{mo.updated_by || 'System'}</span></p>
+          {mo.note && <p className="flex"><span className="w-24 shrink-0">Note:</span> <span className="font-medium text-gray-700 italic">{mo.note}</span></p>}
         </div>
       </div>
 
@@ -111,23 +112,6 @@ const MOPrintTemplate: React.FC<MOPrintTemplateProps> = ({ mo }) => {
           </tr>
         </tbody>
       </table>
-
-      {/* Signature Section */}
-      <div className="grid grid-cols-4 gap-12 mt-20 px-4">
-        {[
-          { label: 'Prepared By', name: mo.requested_by || 'System' },
-          { label: 'Checked By', name: mo.updated_by || 'System' },
-          { label: 'Confirmed By', name: mo.updated_by || 'System' },
-          { label: 'Approved By', name: mo.updated_by || 'System' },
-        ].map((sig, i) => (
-          <div key={i} className="text-center flex flex-col items-center">
-            <div className="border-t border-black w-full pt-1.5 mb-1">
-              <p className="font-bold text-[10px] uppercase tracking-tighter text-gray-900">{sig.label}</p>
-            </div>
-            <p className="text-[10px] font-bold text-gray-600 uppercase truncate max-w-full">{sig.name}</p>
-          </div>
-        ))}
-      </div>
 
       {/* Footer Branding */}
       <div className="mt-24 pt-4 border-t border-gray-100 flex items-center justify-center text-[8px] font-black text-gray-300 uppercase tracking-[0.5em]">

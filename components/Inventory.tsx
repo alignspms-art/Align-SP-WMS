@@ -21,7 +21,6 @@ interface InventoryItem {
   lastIssuedQty?: number;
   lastIssuedDate?: string;
   expiryDate?: string;
-  batchNumber?: string;
 }
 
 const Inventory: React.FC = () => {
@@ -50,7 +49,7 @@ const Inventory: React.FC = () => {
         // Apply column filters
         Object.entries(columnFilters).forEach(([column, value]) => {
           if (value) {
-            if (column === 'code' || column === 'sku' || column === 'name' || column === 'uom' || column === 'type' || column === 'group_name' || column === 'department') {
+            if (column === 'code' || column === 'sku' || column === 'name' || column === 'uom' || column === 'type' || column === 'department') {
               query = query.ilike(column, `%${value}%`);
             } else if (column === 'received_qty' || column === 'issued_qty' || column === 'on_hand_stock' || column === 'safety_stock') {
               query = query.eq(column, parseInt(value) || 0);
@@ -95,8 +94,7 @@ const Inventory: React.FC = () => {
         lastReceivedDate: item.last_received_date,
         lastIssuedQty: item.last_issued_qty,
         lastIssuedDate: item.last_issued_date,
-        expiryDate: item.expiry_date,
-        batchNumber: item.batch_number
+        expiryDate: item.expiry_date
       }));
       setInventory(mapped);
     } catch (err) {
@@ -121,10 +119,10 @@ const Inventory: React.FC = () => {
 
   const columnSuggestions = React.useMemo(() => {
     const suggestions: Record<string, string[]> = {};
-    const columns = ['code', 'sku', 'name', 'uom', 'type', 'group_name', 'department'];
+    const columns = ['code', 'sku', 'name', 'uom', 'type', 'department'];
     
     columns.forEach(col => {
-      const key = col === 'type' ? 'itemType' : col === 'department' ? 'costCenter' : col === 'batch_number' ? 'batchNumber' : col === 'expiry_date' ? 'expiryDate' : col;
+      const key = col === 'type' ? 'itemType' : col === 'department' ? 'costCenter' : col === 'expiry_date' ? 'expiryDate' : col;
       const uniqueValues = Array.from(new Set(inventory.map(item => String((item as any)[key] || ''))))
         .filter(val => val && val !== 'N/A')
         .sort();
@@ -265,12 +263,6 @@ const Inventory: React.FC = () => {
                 </th>
                 <th className="px-6 py-4 text-center w-32">
                   <div className="flex items-center justify-center">
-                    <span>Batch No</span>
-                    <ColumnFilter columnName="Batch No" currentValue={columnFilters.batch_number || ''} onFilter={(val) => handleColumnFilter('batch_number', val)} suggestions={columnSuggestions.batch_number} />
-                  </div>
-                </th>
-                <th className="px-6 py-4 text-center w-32">
-                  <div className="flex items-center justify-center">
                     <span>Expiry Date</span>
                     <ColumnFilter columnName="Expiry Date" currentValue={columnFilters.expiry_date || ''} onFilter={(val) => handleColumnFilter('expiry_date', val)} suggestions={columnSuggestions.expiry_date} />
                   </div>
@@ -337,7 +329,6 @@ const Inventory: React.FC = () => {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-center">{item.batchNumber || '-'}</td>
                     <td className={`px-6 py-4 text-center ${
                       item.expiryDate && new Date(item.expiryDate).getTime() < new Date().getTime() + (7 * 24 * 60 * 60 * 1000)
                         ? 'text-red-600 font-bold'

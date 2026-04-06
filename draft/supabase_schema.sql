@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS items (
     uom TEXT,
     location TEXT,
     type TEXT,
-    group_name TEXT,
     source TEXT,
     department TEXT,
     opening_stock INTEGER DEFAULT 0,
@@ -26,6 +25,12 @@ CREATE TABLE IF NOT EXISTS items (
     received_qty INTEGER DEFAULT 0,
     last_issued TIMESTAMP WITH TIME ZONE,
     last_received TIMESTAMP WITH TIME ZONE,
+    last_issued_qty INTEGER DEFAULT 0,
+    last_issued_date TIMESTAMP WITH TIME ZONE,
+    last_received_qty INTEGER DEFAULT 0,
+    last_received_date TIMESTAMP WITH TIME ZONE,
+    expiry_date DATE,
+    cost_center TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -91,6 +96,7 @@ CREATE TABLE IF NOT EXISTS move_orders (
     status TEXT DEFAULT 'Pending',
     total_value DECIMAL DEFAULT 0,
     items JSONB DEFAULT '[]'::jsonb,
+    note TEXT,
     requested_by TEXT,
     updated_by TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

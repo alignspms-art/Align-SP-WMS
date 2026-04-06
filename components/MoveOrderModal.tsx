@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Plus, ScanLine, Loader2, CheckCircle2 } from 'lucide-react';
+import { X, Trash2, Plus, ScanLine, Loader2, CheckCircle2, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import ScannerModal from './ScannerModal';
+import ItemSearchInput from './ItemSearchInput';
 
 interface MoveOrderItem {
   id: string;
@@ -148,28 +149,6 @@ const MoveOrderModal: React.FC<MoveOrderModalProps> = ({ isOpen, onClose }) => {
     setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
-  const handleSkuLookup = async (id: string, sku: string) => {
-    if (!sku) return;
-    setIsSearching(true);
-    const { data, error } = await supabase
-      .from('items')
-      .select('*')
-      .eq('sku', sku)
-      .maybeSingle();
-
-    if (data && !error) {
-      setItems(prev => prev.map(item => item.id === id ? {
-        ...item,
-        name: data.name,
-        uom: data.uom,
-        size: data.size || '',
-        unitPrice: data.avg_price || data.last_price || 0,
-        onHand: String(data.on_hand_stock || '0'),
-      } : item));
-    }
-    setIsSearching(false);
-  };
-
   const handleSubmit = async () => {
     if (!department || !employeeName || !employeeId || !shift) {
       alert("Please fill in all mandatory fields: Department, Employee Name, Employee ID, and Shift.");
@@ -215,8 +194,12 @@ const MoveOrderModal: React.FC<MoveOrderModalProps> = ({ isOpen, onClose }) => {
 
       let { error } = await supabase.from('move_orders').insert([insertData]);
 
-      // Fallback: If 'note' column doesn't exist, append note to header_text
-      if (error && error.message.includes("column \"note\" of relation \"move_orders\" does not exist")) {
+      // Fallback: If 'note' column doesn't exist or isn't in schema cache, append note to header_text
+      if (error && (
+        error.message.includes("column \"note\" of relation \"move_orders\" does not exist") || 
+        error.message.includes("Could not find the 'note' column") ||
+        error.code === 'PGRST204' // PostgREST error for missing column in schema cache
+      )) {
         delete insertData.note;
         insertData.header_text = `${purpose}${note ? ` (Note: ${note})` : ''}`;
         const retry = await supabase.from('move_orders').insert([insertData]);
@@ -488,21 +471,42 @@ const MoveOrderModal: React.FC<MoveOrderModalProps> = ({ isOpen, onClose }) => {
                   {items.map((item) => (
                     <tr key={item.id} className="group border-b border-gray-50 last:border-0">
                       <td className="pr-2 py-1">
-                        <input 
-                          type="text" 
-                          placeholder="Item Name"
+                        <ItemSearchInput
                           value={item.name}
-                          onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                          onChange={(val) => updateItem(item.id, 'name', val)}
+                          onSelect={(data) => {
+                            setItems(prev => prev.map(i => i.id === item.id ? {
+                              ...i,
+                              sku: data.sku,
+                              name: data.name,
+                              uom: data.uom,
+                              size: data.size || '',
+                              onHand: String(data.on_hand_stock || '0'),
+                              unitPrice: data.avg_price || data.last_price || 0,
+                            } : i));
+                          }}
+                          placeholder="Item Name"
+                          searchField="name"
                           className="w-full px-3 py-2 bg-[#f8f9fa] border border-cyan-700/30 rounded focus:border-[#2d808e] outline-none text-xs font-bold uppercase"
                         />
                       </td>
                       <td className="px-2 py-1">
-                        <input 
-                          type="text" 
-                          placeholder="SKU/Code"
+                        <ItemSearchInput
                           value={item.sku}
-                          onChange={(e) => updateItem(item.id, 'sku', e.target.value)}
-                          onBlur={(e) => handleSkuLookup(item.id, e.target.value)}
+                          onChange={(val) => updateItem(item.id, 'sku', val)}
+                          onSelect={(data) => {
+                            setItems(prev => prev.map(i => i.id === item.id ? {
+                              ...i,
+                              sku: data.sku,
+                              name: data.name,
+                              uom: data.uom,
+                              size: data.size || '',
+                              onHand: String(data.on_hand_stock || '0'),
+                              unitPrice: data.avg_price || data.last_price || 0,
+                            } : i));
+                          }}
+                          placeholder="SKU/Code"
+                          searchField="sku"
                           className="w-full px-3 py-2 bg-white border border-[#2d808e]/40 rounded focus:border-[#2d808e] outline-none text-xs font-black text-[#2d808e]"
                         />
                       </td>

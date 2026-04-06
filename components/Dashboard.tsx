@@ -20,7 +20,6 @@ import TnxReport from './TnxReport';
 import MOReport from './MOReport';
 import ItemList from './ItemList';
 import ItemUOM from './ItemUOM';
-import ItemGroup from './ItemGroup';
 import ItemType from './ItemType';
 import CostCenter from './CostCenter';
 import LabelManagement from './LabelManagement';
@@ -62,9 +61,8 @@ import {
   BarChart3,
   ArrowRight,
   ArrowLeft,
-  Layers,
-  Tag,
-  Boxes,
+  Tag, 
+  Boxes, 
   ArrowUpRight,
   Phone,
   Briefcase,
@@ -377,6 +375,7 @@ const DashboardOverview: React.FC<{
     const today = new Date(); today.setHours(0,0,0,0);
     const { data: allPo } = await supabase.from('purchase_orders').select('items, created_at');
     const { data: allPr } = await supabase.from('requisitions').select('items, created_at');
+    
     const sumQty = (list: any[], dateLimit: Date) => {
       let qty = 0; let count = 0;
       list?.filter(entry => new Date(entry.created_at) >= dateLimit).forEach(entry => {
@@ -384,11 +383,14 @@ const DashboardOverview: React.FC<{
       });
       return { qty: qty > 1000 ? (qty/1000).toFixed(1) + 'K' : qty.toString(), count: count.toString() };
     };
+
+    const combinedOrders = [...(allPo || []), ...(moveOrders || [])];
+
     setStats({
-      todayOrderQty: sumQty(allPo || [], today).qty, todayOrderCount: sumQty(allPo || [], today).count,
-      lastDayOrderQty: sumQty(allPo || [], new Date(today.getTime() - 86400000)).qty, lastDayOrderCount: sumQty(allPo || [], new Date(today.getTime() - 86400000)).count,
-      weeklyOrderQty: sumQty(allPo || [], new Date(today.getTime() - 7*86400000)).qty, weeklyOrderCount: sumQty(allPo || [], new Date(today.getTime() - 7*86400000)).count,
-      monthlyOrderQty: sumQty(allPo || [], new Date(today.getTime() - 30*86400000)).qty, monthlyOrderCount: sumQty(allPo || [], new Date(today.getTime() - 30*86400000)).count,
+      todayOrderQty: sumQty(combinedOrders, today).qty, todayOrderCount: sumQty(combinedOrders, today).count,
+      lastDayOrderQty: sumQty(combinedOrders, new Date(today.getTime() - 86400000)).qty, lastDayOrderCount: sumQty(combinedOrders, new Date(today.getTime() - 86400000)).count,
+      weeklyOrderQty: sumQty(combinedOrders, new Date(today.getTime() - 7*86400000)).qty, weeklyOrderCount: sumQty(combinedOrders, new Date(today.getTime() - 7*86400000)).count,
+      monthlyOrderQty: sumQty(combinedOrders, new Date(today.getTime() - 30*86400000)).qty, monthlyOrderCount: sumQty(combinedOrders, new Date(today.getTime() - 30*86400000)).count,
       weeklyPrQty: sumQty(allPr || [], new Date(today.getTime() - 7*86400000)).qty, weeklyPrCount: sumQty(allPr || [], new Date(today.getTime() - 7*86400000)).count,
       monthlyPrQty: sumQty(allPr || [], new Date(today.getTime() - 30*86400000)).qty, monthlyPrCount: sumQty(allPr || [], new Date(today.getTime() - 30*86400000)).count
     });
@@ -1224,7 +1226,7 @@ const Dashboard: React.FC = () => {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     purchase: location.pathname.includes('requisition') || location.pathname.includes('purchase-order') || location.pathname.includes('supplier') || location.pathname.includes('purchase-report'),
     warehouse: location.pathname.includes('inventory') || location.pathname.includes('receive') || location.pathname.includes('issue') || location.pathname.includes('tnx-report') || location.pathname.includes('mo-report'),
-    itemMaster: location.pathname.includes('item-list') || location.pathname.includes('item-uom') || location.pathname.includes('item-group') || location.pathname.includes('item-type') || location.pathname.includes('cost-center'),
+    itemMaster: location.pathname.includes('item-list') || location.pathname.includes('item-uom') || location.pathname.includes('item-type') || location.pathname.includes('cost-center'),
     analysis: location.pathname.includes('low-stock') || location.pathname.includes('abc-analysis'),
     admin: location.pathname.includes('users')
   });
@@ -1313,7 +1315,6 @@ const Dashboard: React.FC = () => {
 
         {(hasGranularPermission('item_list', 'view') || 
           hasGranularPermission('item_uom', 'view') || 
-          hasGranularPermission('item_group', 'view') || 
           hasGranularPermission('item_type', 'view') || 
           hasGranularPermission('cost_center', 'view')) && (
           <SidebarItem 
@@ -1329,7 +1330,6 @@ const Dashboard: React.FC = () => {
           >
             {hasGranularPermission('item_list', 'view') && <SubmenuItem icon={<FileText />} label="Item List" active={activeTab === 'item-list'} onClick={() => menuNavigate('/item-list')} />}
             {hasGranularPermission('item_uom', 'view') && <SubmenuItem icon={<Boxes />} label="Item UOM" active={activeTab === 'item-uom'} onClick={() => menuNavigate('/item-uom')} />}
-            {hasGranularPermission('item_group', 'view') && <SubmenuItem icon={<Layers />} label="Item Group" active={activeTab === 'item-group'} onClick={() => menuNavigate('/item-group')} />}
             {hasGranularPermission('item_type', 'view') && <SubmenuItem icon={<Tag />} label="Item Type" active={activeTab === 'item-type'} onClick={() => menuNavigate('/item-type')} />}
             {hasGranularPermission('cost_center', 'view') && <SubmenuItem icon={<Home />} label="Cost Center" active={activeTab === 'cost-center'} onClick={() => menuNavigate('/cost-center')} />}
           </SidebarItem>
@@ -1434,7 +1434,7 @@ const Dashboard: React.FC = () => {
           <div className="max-w-[1600px] mx-auto w-full">
             <Routes>
               <Route path="/overview" element={<DashboardOverview refreshKey={refreshKey} onCheckStock={() => setIsStockStatusModalOpen(true)} onMoveOrder={() => setIsMoveOrderModalOpen(true)} onLocTransfer={() => setIsLocationTransferModalOpen(true)} onPreviewPr={setPreviewPr} onPreviewPo={setPreviewPo} onPreviewMo={setPreviewMo} onPreviewMoDetail={setPreviewMoDetail} onPreviewGrn={setPreviewGrn} />} />
-              <Route path="/users" element={<UserManagement />} /><Route path="/requisition" element={<PurchaseRequisition />} /><Route path="/purchase-order" element={<PurchaseOrder />} /><Route path="/supplier" element={<Supplier />} /><Route path="/purchase-report" element={<PurchaseReport />} /><Route path="/inventory" element={<Inventory />} /><Route path="/receive" element={<Receive />} /><Route path="/issue" element={<Issue />} /><Route path="/tnx-report" element={<TnxReport />} /><Route path="/mo-report" element={<MOReport />} /><Route path="/item-list" element={<ItemList />} /><Route path="/item-uom" element={<ItemUOM />} /><Route path="/item-group" element={<ItemGroup />} /><Route path="/item-type" element={<ItemType />} /><Route path="/cost-center" element={<CostCenter />} /><Route path="/label" element={<LabelManagement />} />              <Route path="/cycle-counting" element={<CycleCounting />} />
+              <Route path="/users" element={<UserManagement />} /><Route path="/requisition" element={<PurchaseRequisition />} /><Route path="/purchase-order" element={<PurchaseOrder />} /><Route path="/supplier" element={<Supplier />} /><Route path="/purchase-report" element={<PurchaseReport />} /><Route path="/inventory" element={<Inventory />} /><Route path="/receive" element={<Receive />} /><Route path="/issue" element={<Issue />} /><Route path="/tnx-report" element={<TnxReport />} /><Route path="/mo-report" element={<MOReport />} /><Route path="/item-list" element={<ItemList />} /><Route path="/item-uom" element={<ItemUOM />} /><Route path="/item-type" element={<ItemType />} /><Route path="/cost-center" element={<CostCenter />} /><Route path="/label" element={<LabelManagement />} />              <Route path="/cycle-counting" element={<CycleCounting />} />
               <Route path="/low-stock" element={hasGranularPermission('low_stock_inventory', 'view') ? <LowStockInventory /> : <Navigate to="/overview" replace />} />
               <Route path="/abc-analysis" element={hasGranularPermission('abc_analysis', 'view') ? <ABCAnalysis /> : <Navigate to="/overview" replace />} />
               <Route path="/issue-report" element={hasGranularPermission('issue_report', 'view') ? <IssueReport /> : <Navigate to="/overview" replace />} />

@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Home, ScanLine, Plus, X, Loader2, CheckCircle2, History, FileSpreadsheet, Calendar } from 'lucide-react';
+import { Home, ScanLine, Plus, X, Loader2, CheckCircle2, History, FileSpreadsheet, Calendar, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import ScannerModal from './ScannerModal';
 import ColumnFilter from './ColumnFilter';
+import ItemSearchInput from './ItemSearchInput';
 import * as XLSX from 'xlsx';
 
 interface CycleCount {
@@ -301,19 +302,17 @@ const CycleCounting: React.FC = () => {
                   <label className="text-[11px] font-bold text-gray-400 uppercase">Item SKU / Scanner</label>
                   <div className="flex space-x-2">
                     <div className="relative flex-1">
-                      <input 
-                        type="text" 
+                      <ItemSearchInput
                         value={sku}
-                        onChange={(e) => setSku(e.target.value)}
-                        onBlur={(e) => handleSkuLookup(e.target.value)}
+                        onChange={(val) => setSku(val)}
+                        onSelect={(data) => {
+                          setSku(data.sku);
+                          handleSkuLookup(data.sku);
+                        }}
                         placeholder="Scan or type SKU..."
+                        searchField="sku"
                         className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:border-[#2d808e] focus:bg-white outline-none text-sm font-bold text-[#2d808e] uppercase transition-all"
                       />
-                      {isSearching && (
-                        <div className="absolute right-4 top-4">
-                          <Loader2 size={20} className="animate-spin text-[#2d808e]" />
-                        </div>
-                      )}
                     </div>
                     <button 
                       type="button"
@@ -323,9 +322,29 @@ const CycleCounting: React.FC = () => {
                       <ScanLine size={24} />
                     </button>
                   </div>
-                  {itemName && (
-                    <div className={`flex items-center space-x-2 mt-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase ${itemName === 'ITEM NOT FOUND' ? 'bg-red-50 text-red-500' : 'bg-[#2d808e]/5 text-[#2d808e]'}`}>
-                      {itemName === 'ITEM NOT FOUND' ? <X size={14} /> : <CheckCircle2 size={14} />}
+                  <div className="mt-4">
+                    <label className="text-[11px] font-bold text-gray-400 uppercase">Item Name</label>
+                    <ItemSearchInput
+                      value={itemName}
+                      onChange={(val) => setItemName(val)}
+                      onSelect={(data) => {
+                        setSku(data.sku);
+                        handleSkuLookup(data.sku);
+                      }}
+                      placeholder="Search by name..."
+                      searchField="name"
+                      className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:border-[#2d808e] focus:bg-white outline-none text-sm font-bold text-[#2d808e] uppercase transition-all"
+                    />
+                  </div>
+                  {itemName && itemName !== 'ITEM NOT FOUND' && (
+                    <div className="flex items-center space-x-2 mt-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase bg-[#2d808e]/5 text-[#2d808e]">
+                      <CheckCircle2 size={14} />
+                      <span>{itemName}</span>
+                    </div>
+                  )}
+                  {itemName === 'ITEM NOT FOUND' && (
+                    <div className="flex items-center space-x-2 mt-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase bg-red-50 text-red-500">
+                      <X size={14} />
                       <span>{itemName}</span>
                     </div>
                   )}
