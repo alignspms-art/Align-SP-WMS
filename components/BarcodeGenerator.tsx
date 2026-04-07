@@ -29,7 +29,13 @@ const BarcodePrintView = ({ labels, settings }: any) => {
   }, [labels, settings]);
 
   return (
-    <div className="printable grid grid-cols-2 gap-4 p-4 bg-white" style={{ width: '100%' }}>
+    <div 
+      className="printable grid gap-4 p-4 bg-white" 
+      style={{ 
+        width: '100%',
+        gridTemplateColumns: `repeat(${settings.columnCount || 2}, minmax(0, 1fr))`
+      }}
+    >
       {labels.map((label: any, idx: number) => (
         <div 
           key={`${label.sku}-${idx}`}
@@ -159,7 +165,7 @@ const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({ onBack }) => {
     root.render(
       <BarcodePrintView 
         labels={labels} 
-        settings={{ showCode, codeFontSize, showName, nameFontSize, barcodeHeight, barcodeWidth }} 
+        settings={{ showCode, codeFontSize, showName, nameFontSize, barcodeHeight, barcodeWidth, columnCount }} 
       />
     );
     // Give time for SVGs to render in the print root

@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Plus, ScanLine, Loader2, CheckCircle2, Search } from 'lucide-react';
+import { X, Trash2, Plus, ScanLine, Loader2, Search, Printer } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import ScannerModal from './ScannerModal';
 import ItemSearchInput from './ItemSearchInput';
+import IssueSlipPrintTemplate from './IssueSlipPrintTemplate';
 
 interface MoveOrderItem {
   id: string;
@@ -266,36 +267,55 @@ const MoveOrderModal: React.FC<MoveOrderModalProps> = ({ isOpen, onClose }) => {
       <div className="bg-white w-full max-w-[1400px] rounded-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
         
         {showSuccess && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-              <div className="bg-emerald-500 p-8 text-center">
-                <CheckCircle2 size={56} className="text-white mx-auto mb-4" strokeWidth={3} />
-                <h4 className="text-xl font-black text-white uppercase tracking-tight">Move Order Generated</h4>
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto">
+            <div className="bg-[#fcfcfc] w-full max-w-[1100px] rounded-xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[96vh] animate-in fade-in zoom-in duration-300">
+              <div className="flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white sticky top-0 z-10">
+                <div className="flex items-center space-x-4">
+                  <div className="bg-[#2d808e] p-2 rounded-lg text-white shadow-lg shadow-cyan-900/20">
+                    <Printer size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-black text-[#2d808e] uppercase tracking-tight">Move Order Request Slip</h2>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">TNX.NO: {refText || `#${showSuccess}`}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <button 
+                    onClick={() => window.print()}
+                    className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all"
+                  >
+                    <Printer size={18} />
+                    <span>Execute Print</span>
+                  </button>
+                  <button 
+                    onClick={() => { setShowSuccess(null); onClose(); }}
+                    className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 rounded-xl transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
               </div>
-              <div className="p-10 space-y-6">
-                <div className="space-y-1 text-center">
-                  <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest block">TNX.NO</span>
-                  <p className="text-3xl font-black text-[#2d808e] tracking-tighter">{refText || `#${showSuccess}`}</p>
+              <div className="flex-1 overflow-y-auto p-12 bg-gray-200/20 scrollbar-thin">
+                <div className="bg-white shadow-2xl border border-gray-200 rounded-sm printable">
+                  <IssueSlipPrintTemplate mo={{
+                    mo_no: showSuccess,
+                    reference: refText,
+                    header_text: purpose,
+                    department: department,
+                    employee_name: employeeName,
+                    employee_id: employeeId,
+                    section: section,
+                    sub_section: subSection,
+                    shift: shift,
+                    items: items,
+                    note: note,
+                    isRequest: true,
+                    created_at: new Date().toISOString()
+                  }} />
                 </div>
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-2">
-                   <div className="flex justify-between text-[11px] font-bold">
-                     <span className="text-gray-400 uppercase">Department</span>
-                     <span className="text-gray-700 uppercase">{department || 'Not Assigned'}</span>
-                   </div>
-                   <div className="flex justify-between text-[11px] font-bold">
-                     <span className="text-gray-400 uppercase">Total Items</span>
-                     <span className="text-gray-700">{items.length}</span>
-                   </div>
-                </div>
-                <p className="text-center text-[11px] text-gray-500 font-medium leading-relaxed">
-                  Your move order request has been registered in the system node and is pending approval.
-                </p>
-                <button 
-                  onClick={() => { setShowSuccess(null); onClose(); }}
-                  className="w-full py-3 bg-[#2d808e] text-white text-[13px] font-black uppercase rounded-xl tracking-widest hover:bg-[#256b78] shadow-lg transition-all active:scale-[0.98]"
-                >
-                  Close & Proceed
-                </button>
+              </div>
+              <div className="px-8 py-4 bg-white border-t border-gray-100 text-center">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Move Order Request Submitted Successfully • Pending Approval</p>
               </div>
             </div>
           </div>

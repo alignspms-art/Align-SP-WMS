@@ -27,6 +27,7 @@ import TnxDetailsModal from './TnxDetailsModal';
 import LocationTransferModal from './LocationTransferModal';
 import GRNPreviewModal from './GRNPreviewModal';
 import MODetailsModal from './MODetailsModal';
+import IssueSlipPrintTemplate from './IssueSlipPrintTemplate';
 import LowStockInventory from './LowStockInventory';
 import ABCAnalysis from './ABCAnalysis';
 import IssueReport from './IssueReport';
@@ -1001,13 +1002,40 @@ const SearchResults: React.FC<{
             <div className="space-y-1">
               <h4 className="px-3 py-1 text-[9px] font-black text-emerald-500 uppercase tracking-widest border-b border-gray-50">Move Orders</h4>
               {results.mo.map(m => (
-                <button key={m.id} onClick={() => onNavigate('mo', m)} className="w-full text-left px-4 py-2 hover:bg-emerald-50 rounded-lg flex items-center justify-between group transition-colors">
-                  <div className="flex flex-col">
-                    <span className="text-[13px] font-black text-gray-800">MO-{m.mo_no}</span>
-                    <span className="text-[10px] font-bold text-gray-400">Dept: {m.department} | Status: {m.status}</span>
+                <div key={m.id} className="w-full px-4 py-3 hover:bg-emerald-50/30 rounded-xl flex flex-col space-y-3 group transition-all border border-transparent hover:border-emerald-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-[13px] font-black text-gray-800 uppercase tracking-tight">MO-{m.mo_no}</span>
+                      <span className="text-[10px] font-bold text-gray-400">Dept: {m.department} | Status: {m.status}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                       <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${
+                         m.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                         m.status === 'Approved' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                         'bg-orange-50 text-orange-600 border-orange-100'
+                       }`}>
+                         {m.status}
+                       </span>
+                       <ArrowUpRight size={14} className="text-gray-300 group-hover:text-emerald-500 transition-colors" />
+                    </div>
                   </div>
-                  <ArrowUpRight size={14} className="text-gray-200 group-hover:text-emerald-500 transition-colors" />
-                </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      onClick={() => onNavigate('mo-request', m)}
+                      className="flex items-center justify-center space-x-2 py-2 bg-white border border-emerald-200 text-[9px] font-black text-emerald-600 rounded-lg hover:bg-emerald-50 transition-all uppercase tracking-widest shadow-sm active:scale-95"
+                    >
+                      <Printer size={12} />
+                      <span>1. Request Slip</span>
+                    </button>
+                    <button 
+                      onClick={() => onNavigate('mo-issue', m)}
+                      className="flex items-center justify-center space-x-2 py-2 bg-[#2d808e] text-white text-[9px] font-black rounded-lg hover:bg-[#256b78] transition-all uppercase tracking-widest shadow-md active:scale-95"
+                    >
+                      <Printer size={12} />
+                      <span>2. Issue Slip</span>
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -1136,6 +1164,8 @@ const Dashboard: React.FC = () => {
   const [previewPr, setPreviewPr] = useState<any>(null);
   const [previewPo, setPreviewPo] = useState<any>(null);
   const [previewMo, setPreviewMo] = useState<any>(null);
+  const [previewMoRequest, setPreviewMoRequest] = useState<any>(null);
+  const [previewMoIssue, setPreviewMoIssue] = useState<any>(null);
   const [previewMoDetail, setPreviewMoDetail] = useState<any>(null);
   const [previewTnx, setPreviewTnx] = useState<any>(null);
   const [previewGrn, setPreviewGrn] = useState<string | null>(null);
@@ -1195,7 +1225,8 @@ const Dashboard: React.FC = () => {
     setSearchQuery('');
     if (type === 'pr') setPreviewPr(obj);
     if (type === 'po') setPreviewPo(obj);
-    if (type === 'mo') setPreviewMo(obj);
+    if (type === 'mo-request') setPreviewMoRequest(obj);
+    if (type === 'mo-issue') setPreviewMoIssue(obj);
     if (type === 'grn') setPreviewGrn(obj.grn_no);
     if (type === 'item') navigate('/item-list');
     if (type === 'transaction') {
@@ -1456,6 +1487,80 @@ const Dashboard: React.FC = () => {
       {previewPo && <POPreviewModal po={previewPo} onClose={() => { setPreviewPo(null); setRefreshKey(prev => prev + 1); }} />}
       {previewMo && <MOApprovalModal mo={previewMo} isOpen={!!previewMo} onClose={() => { setPreviewMo(null); setRefreshKey(prev => prev + 1); }} />}
       {previewMoDetail && <MODetailsModal mo={previewMoDetail} onClose={() => setPreviewMoDetail(null)} />}
+      {previewMoRequest && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto no-print">
+          <div className="bg-[#fcfcfc] w-full max-w-[1100px] rounded-xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[96vh] animate-in fade-in zoom-in duration-300">
+            <div className="flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white sticky top-0 z-10">
+              <div className="flex items-center space-x-4">
+                <div className="bg-[#2d808e] p-2 rounded-lg text-white shadow-lg shadow-cyan-900/20">
+                  <Printer size={20} />
+                </div>
+                <div>
+                  <h2 className="text-sm font-black text-[#2d808e] uppercase tracking-tight">Move Order Request Slip</h2>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">TNX.NO: {previewMoRequest.reference || previewMoRequest.mo_no}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button 
+                  onClick={() => window.print()}
+                  className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all"
+                >
+                  <Printer size={18} />
+                  <span>Execute Print</span>
+                </button>
+                <button 
+                  onClick={() => setPreviewMoRequest(null)}
+                  className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 rounded-xl transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-12 bg-gray-200/20 scrollbar-thin">
+              <div className="bg-white shadow-2xl border border-gray-200 rounded-sm printable">
+                <IssueSlipPrintTemplate mo={{ ...previewMoRequest, isRequest: true }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {previewMoIssue && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto no-print">
+          <div className="bg-[#fcfcfc] w-full max-w-[1100px] rounded-xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[96vh] animate-in fade-in zoom-in duration-300">
+            <div className="flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white sticky top-0 z-10">
+              <div className="flex items-center space-x-4">
+                <div className="bg-[#2d808e] p-2 rounded-lg text-white shadow-lg shadow-cyan-900/20">
+                  <Printer size={20} />
+                </div>
+                <div>
+                  <h2 className="text-sm font-black text-[#2d808e] uppercase tracking-tight">Issue Slip Print Preview</h2>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">TNX.NO: {previewMoIssue.reference || previewMoIssue.mo_no}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button 
+                  onClick={() => window.print()}
+                  className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all"
+                >
+                  <Printer size={18} />
+                  <span>Execute Print</span>
+                </button>
+                <button 
+                  onClick={() => setPreviewMoIssue(null)}
+                  className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 rounded-xl transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-12 bg-gray-200/20 scrollbar-thin">
+              <div className="bg-white shadow-2xl border border-gray-200 rounded-sm printable">
+                <IssueSlipPrintTemplate mo={previewMoIssue} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {previewTnx && <TnxDetailsModal tnx={previewTnx} onClose={() => setPreviewTnx(null)} />}
       {previewGrn && <GRNPreviewModal grnId={previewGrn} onClose={() => setPreviewGrn(null)} />}
       <ProfileModal user={user} isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} logout={logout} />

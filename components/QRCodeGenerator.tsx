@@ -10,7 +10,13 @@ interface QRCodeGeneratorProps {
 
 const QRCodePrintView = ({ labels, settings }: any) => {
   return (
-    <div className="printable grid grid-cols-2 gap-4 p-4 bg-white" style={{ width: '100%' }}>
+    <div 
+      className="printable grid gap-4 p-4 bg-white" 
+      style={{ 
+        width: '100%',
+        gridTemplateColumns: `repeat(${settings.columnCount || 2}, minmax(0, 1fr))`
+      }}
+    >
       {labels.map((label: any, idx: number) => (
         <div 
           key={`${label.sku}-${idx}`}
@@ -127,7 +133,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
     root.render(
       <QRCodePrintView 
         labels={labels} 
-        settings={{ showCode, codeFontSize, showName, nameFontSize, qrSize }} 
+        settings={{ showCode, codeFontSize, showName, nameFontSize, qrSize, columnCount }} 
       />
     );
     // Give time for images to load from external API

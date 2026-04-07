@@ -100,7 +100,9 @@ const IssueSlipPrintTemplate: React.FC<IssueSlipPrintTemplateProps> = ({ mo }) =
               <td className="border-r-2 border-black py-1 px-2">{item.sku || '-'}</td>
               <td className="border-r-2 border-black py-1 px-2">{item.size || '-'}</td>
               <td className="border-r-2 border-black py-1 px-1">{Number(item.reqQty || 0).toFixed(2)}</td>
-              <td className="border-r-2 border-black py-1 px-1">{Number(item.tnxQty || item.issuedQty || 0).toFixed(2)}</td>
+              <td className="border-r-2 border-black py-1 px-1">
+                {mo.isRequest ? '' : Number(item.tnxQty || item.issuedQty || 0).toFixed(2)}
+              </td>
               <td className="border-r-2 border-black py-1 px-1 uppercase">{item.uom || '-'}</td>
               <td className="py-1 px-2 text-left italic text-gray-600">{item.remarks || '-'}</td>
             </tr>
@@ -113,7 +115,7 @@ const IssueSlipPrintTemplate: React.FC<IssueSlipPrintTemplateProps> = ({ mo }) =
       </div>
 
       {/* Signature Section */}
-      <div className="grid grid-cols-5 border-2 border-black text-[11px] font-black uppercase tracking-tighter">
+      <div className="grid grid-cols-4 border-2 border-black text-[11px] font-black uppercase tracking-tighter">
         <div className="border-r-2 border-black flex flex-col items-center justify-end h-28 pb-2">
           <div className="w-full border-t-2 border-black pt-2 text-center">Received By</div>
         </div>
@@ -122,9 +124,6 @@ const IssueSlipPrintTemplate: React.FC<IssueSlipPrintTemplateProps> = ({ mo }) =
         </div>
         <div className="border-r-2 border-black flex flex-col items-center justify-end h-28 pb-2">
           <div className="w-full border-t-2 border-black pt-2 text-center">Checked By</div>
-        </div>
-        <div className="border-r-2 border-black flex flex-col items-center justify-end h-28 pb-2">
-          <div className="w-full border-t-2 border-black pt-2 text-center px-1">Authorised By<br/>Head of MMT</div>
         </div>
         <div className="flex flex-col items-center justify-end h-28 pb-2">
           <div className="w-full border-t-2 border-black pt-2 text-center px-1">Approved By<br/>Depertment Head</div>
