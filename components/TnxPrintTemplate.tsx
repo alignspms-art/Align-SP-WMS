@@ -22,7 +22,7 @@ const TnxPrintTemplate: React.FC<TnxPrintTemplateProps> = ({ tnx }) => {
   };
 
   return (
-    <div id="tnx-print-view" className="bg-white text-black font-sans p-8 md:p-12 max-w-[1200px] mx-auto select-text leading-tight">
+    <div id="tnx-print-view" className="bg-white text-black font-sans p-8 md:p-12 max-w-[1200px] mx-auto select-text leading-tight printable">
       {/* Header */}
       <div className="flex justify-between items-start mb-8 relative">
         <div className="flex-1 text-center">

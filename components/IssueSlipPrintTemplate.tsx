@@ -19,7 +19,7 @@ const IssueSlipPrintTemplate: React.FC<IssueSlipPrintTemplateProps> = ({ mo }) =
   };
 
   return (
-    <div id="issue-slip-print" className="bg-white text-black font-sans p-8 md:p-12 max-w-[1000px] mx-auto select-text leading-tight">
+    <div id="issue-slip-print" className="bg-white text-black font-sans p-8 md:p-12 max-w-[1000px] mx-auto select-text leading-tight printable">
       {/* Header */}
       <div className="text-center mb-6">
         <div className="inline-block bg-black text-white px-8 py-1.5 rounded-full text-sm font-black uppercase tracking-[0.2em] mb-4 shadow-sm">

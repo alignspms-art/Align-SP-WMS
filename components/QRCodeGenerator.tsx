@@ -11,10 +11,11 @@ interface QRCodeGeneratorProps {
 const QRCodePrintView = ({ labels, settings }: any) => {
   return (
     <div 
-      className="grid gap-4 p-4 bg-white" 
+      className="grid gap-4 p-4 bg-white printable" 
       style={{ 
         width: '100%',
-        gridTemplateColumns: `repeat(${settings.columnCount || 2}, 1fr)`
+        gridTemplateColumns: `repeat(${settings.columnCount || 2}, minmax(0, 1fr))`,
+        display: 'grid'
       }}
     >
       {labels.map((label: any, idx: number) => (
@@ -129,6 +130,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
     const printSection = document.getElementById('print-section');
     if (!printSection) return;
     printSection.innerHTML = '';
+    printSection.classList.add('printable');
     const root = createRoot(printSection);
     root.render(
       <QRCodePrintView 
@@ -137,7 +139,14 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
       />
     );
     // Give time for images to load from external API
-    setTimeout(() => window.print(), 1000);
+    setTimeout(() => {
+      window.print();
+      // Cleanup after print dialog opens
+      setTimeout(() => {
+        printSection.classList.remove('printable');
+        printSection.innerHTML = '';
+      }, 1000);
+    }, 1000);
   };
 
   return (
