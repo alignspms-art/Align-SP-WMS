@@ -1,28 +1,44 @@
-import React, { useState } from 'react';
-import { Home, Plus, Edit2, Search, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Home, Plus, Edit2, Search, X, Trash2, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface GroupItem {
-  sl: number;
+  id: string;
+  sl?: number;
   name: string;
   description: string;
 }
 
 const ItemGroup: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [groups, setGroups] = useState<GroupItem[]>([
-    { sl: 1, name: 'Maintenance Item', description: 'Used for equipment and facility upkeep' },
-    { sl: 2, name: 'Paint Item', description: 'Paints, chemical coatings, and solvents' },
-    { sl: 3, name: 'Civil Item', description: 'Construction and structural maintenance materials' },
-    { sl: 4, name: 'Admin Item', description: 'Office and administrative supplies' },
-    { sl: 5, name: 'Assembly Item', description: 'Components used in the production assembly line' },
-    { sl: 6, name: 'Assets & Machinery', description: 'Long-term capital equipment and machinery' },
-    { sl: 7, name: 'IT Item', description: 'Computers, networking, and technology accessories' },
-    { sl: 8, name: 'Safety Item', description: 'Personal protective equipment and safety gear' },
-  ]);
-
+  const [groups, setGroups] = useState<GroupItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<GroupItem | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({ name: '', description: '' });
+
+  const fetchGroups = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('item_groups')
+        .select('*')
+        .order('name', { ascending: true });
+      
+      if (data && !error) {
+        setGroups(data.map((item, index) => ({ ...item, sl: index + 1 })));
+      }
+    } catch (err) {
+      console.error("Error fetching item groups:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
 
   const filteredGroups = groups.filter(group => 
     group.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -40,16 +56,45 @@ const ItemGroup: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name.trim()) return;
 
-    if (editingItem) {
-      setGroups(groups.map(g => g.sl === editingItem.sl ? { ...g, ...formData } : g));
-    } else {
-      const nextSl = groups.length > 0 ? Math.max(...groups.map(g => g.sl)) + 1 : 1;
-      setGroups([...groups, { sl: nextSl, ...formData }]);
+    setIsSaving(true);
+    try {
+      if (editingItem) {
+        const { error } = await supabase
+          .from('item_groups')
+          .update(formData)
+          .eq('id', editingItem.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('item_groups')
+          .insert([formData]);
+        if (error) throw error;
+      }
+      setIsModalOpen(false);
+      fetchGroups();
+    } catch (err: any) {
+      alert("Error saving item group: " + err.message);
+    } finally {
+      setIsSaving(false);
     }
-    setIsModalOpen(false);
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to delete ${name}?`)) {
+      try {
+        const { error } = await supabase
+          .from('item_groups')
+          .delete()
+          .eq('id', id);
+        if (error) throw error;
+        fetchGroups();
+      } catch (err: any) {
+        alert("Error deleting: " + err.message);
+      }
+    }
   };
 
   return (
@@ -69,8 +114,9 @@ const ItemGroup: React.FC = () => {
       </div>
 
       <div className="flex items-center justify-between">
-        <button className="border border-[#2d808e] text-[#2d808e] px-5 py-1 rounded text-[12px] font-bold hover:bg-gray-50 transition-all">
-          Logs
+        <button onClick={fetchGroups} className="border border-[#2d808e] text-[#2d808e] px-5 py-1 rounded text-[12px] font-bold hover:bg-gray-50 transition-all flex items-center gap-2">
+          {loading && <Loader2 size={12} className="animate-spin" />}
+          Refresh
         </button>
         <div className="flex items-center">
           <div className="relative flex">
@@ -100,22 +146,39 @@ const ItemGroup: React.FC = () => {
               </tr>
             </thead>
             <tbody className="text-[11px] text-gray-600 font-medium">
-              {filteredGroups.map((group) => (
-                <tr key={group.sl} className="hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0">
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="py-20 text-center">
+                    <Loader2 className="animate-spin text-[#2d808e] mx-auto mb-2" size={24} />
+                    <span className="text-gray-400 uppercase font-black tracking-widest text-[10px]">Loading Groups...</span>
+                  </td>
+                </tr>
+              ) : filteredGroups.map((group) => (
+                <tr key={group.id} className="hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0">
                   <td className="px-6 py-4 text-center">{group.sl}</td>
                   <td className="px-6 py-4 font-bold text-[#2d808e]">{group.name}</td>
                   <td className="px-6 py-4">{group.description}</td>
                   <td className="px-6 py-4 text-center">
-                    <button 
-                      onClick={() => handleOpenModal(group)}
-                      className="p-1.5 text-blue-500 hover:bg-blue-50 border border-blue-100 rounded transition-all"
-                    >
-                      <Edit2 size={12} />
-                    </button>
+                    <div className="flex items-center justify-center space-x-3">
+                      <button 
+                        onClick={() => handleOpenModal(group)}
+                        className="p-1.5 text-blue-500 hover:bg-blue-50 border border-blue-100 rounded transition-all"
+                        title="Edit"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(group.id, group.name)}
+                        className="p-1.5 text-red-400 hover:bg-red-50 border border-red-100 rounded transition-all"
+                        title="Delete"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
-              {filteredGroups.length === 0 && (
+              {!loading && filteredGroups.length === 0 && (
                 <tr>
                   <td colSpan={4} className="py-10 text-center text-gray-400 italic">
                     No matching Groups found.
@@ -160,14 +223,17 @@ const ItemGroup: React.FC = () => {
               <div className="pt-4 flex justify-end gap-3">
                 <button 
                   onClick={() => setIsModalOpen(false)}
+                  disabled={isSaving}
                   className="px-6 py-2 text-sm font-bold text-gray-500 hover:bg-gray-50 rounded transition-all"
                 >
                   Cancel
                 </button>
                 <button 
                   onClick={handleSave}
-                  className="bg-[#2d808e] text-white px-8 py-2 rounded text-sm font-bold shadow-sm hover:bg-[#256b78] transition-all"
+                  disabled={isSaving}
+                  className="bg-[#2d808e] text-white px-8 py-2 rounded text-sm font-bold shadow-sm hover:bg-[#256b78] transition-all flex items-center gap-2"
                 >
+                  {isSaving && <Loader2 size={14} className="animate-spin" />}
                   Save
                 </button>
               </div>

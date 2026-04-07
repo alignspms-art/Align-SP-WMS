@@ -38,7 +38,7 @@ const TnxDetailsModal: React.FC<TnxDetailsModalProps> = ({ tnx, onClose }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-12 scrollbar-thin bg-gray-200/20">
-           <div className="bg-white shadow-2xl border border-gray-200 rounded-sm">
+           <div className="bg-white shadow-2xl border border-gray-200 rounded-sm printable">
              <TnxPrintTemplate tnx={tnx} />
            </div>
         </div>

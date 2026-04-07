@@ -359,7 +359,7 @@ const Issue: React.FC = () => {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto bg-gray-50 p-12 scrollbar-thin">
-              <div className="bg-white shadow-2xl mx-auto ring-1 ring-gray-200">
+              <div className="bg-white shadow-2xl mx-auto ring-1 ring-gray-200 printable">
                 <IssueSlipPrintTemplate mo={previewMo} />
               </div>
             </div>

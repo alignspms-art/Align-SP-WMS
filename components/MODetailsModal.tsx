@@ -42,7 +42,7 @@ const MODetailsModal: React.FC<MODetailsModalProps> = ({ mo, onClose }) => {
 
         {/* Report Content Wrapper */}
         <div className="flex-1 overflow-y-auto p-4 md:p-12 scrollbar-thin bg-gray-200/20">
-           <div className="bg-white shadow-2xl border border-gray-200 rounded-sm ring-1 ring-black/5">
+           <div className="bg-white shadow-2xl border border-gray-200 rounded-sm ring-1 ring-black/5 printable">
              <MOPrintTemplate mo={mo} />
            </div>
         </div>

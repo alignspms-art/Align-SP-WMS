@@ -10,7 +10,7 @@ interface QRCodeGeneratorProps {
 
 const QRCodePrintView = ({ labels, settings }: any) => {
   return (
-    <div className="grid grid-cols-2 gap-4 p-4 bg-white" style={{ width: '100%' }}>
+    <div className="printable grid grid-cols-2 gap-4 p-4 bg-white" style={{ width: '100%' }}>
       {labels.map((label: any, idx: number) => (
         <div 
           key={`${label.sku}-${idx}`}

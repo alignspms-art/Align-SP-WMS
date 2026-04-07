@@ -99,7 +99,8 @@ const MOApprovalModal: React.FC<MOApprovalModalProps> = ({ mo, isOpen, onClose }
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
+      // 1. Update Move Order status to Approved
+      const { error: updateError } = await supabase
         .from('move_orders')
         .update({ 
           status: 'Approved',
@@ -109,7 +110,49 @@ const MOApprovalModal: React.FC<MOApprovalModalProps> = ({ mo, isOpen, onClose }
         })
         .eq('id', mo.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // 2. Deduct stock from Master Item stock
+      for (const item of items) {
+        const qty = Number(item.issuedQty) || 0;
+        if (qty > 0) {
+          const { error: rpcError } = await supabase.rpc('update_item_stock', {
+            item_sku: item.sku,
+            qty_change: -qty,
+            is_receive: false,
+            ref_no: mo.reference || mo.mo_no,
+            dept: mo.department
+          });
+
+          // Update last issued fields
+          await supabase
+            .from('items')
+            .update({ 
+              last_issued_qty: qty,
+              last_issued_date: new Date().toISOString(),
+              cost_center: mo.department || 'N/A'
+            })
+            .eq('sku', item.sku);
+
+          if (rpcError) {
+            console.warn('RPC update_item_stock failed, trying direct update:', rpcError);
+            const { data: currentItem } = await supabase
+              .from('items')
+              .select('on_hand_stock')
+              .eq('sku', item.sku)
+              .single();
+            
+            if (currentItem) {
+              const newStock = (Number(currentItem.on_hand_stock) || 0) - qty;
+              await supabase
+                .from('items')
+                .update({ on_hand_stock: newStock })
+                .eq('sku', item.sku);
+            }
+          }
+        }
+      }
+
       setShowPrintPreview(true);
     } catch (err: any) {
       alert("Approval failed: " + err.message);
@@ -410,7 +453,7 @@ const MOApprovalModal: React.FC<MOApprovalModalProps> = ({ mo, isOpen, onClose }
         </div>
 
         {/* Hidden Print Template for actual printing */}
-        <div className="hidden print:block">
+        <div className="hidden print:block printable">
           <IssueSlipPrintTemplate mo={{ ...mo, items }} />
         </div>
 

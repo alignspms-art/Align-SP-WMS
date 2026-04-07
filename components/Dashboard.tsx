@@ -269,7 +269,7 @@ const DashboardOverview: React.FC<{
     if (moApprovals) setPendingMos(moApprovals);
     const { data: prLogs } = await supabase.from('requisitions').select('*').order('created_at', { ascending: false });
     if (prLogs) setLatestPRs(prLogs);
-    const { data: moLogs } = await supabase.from('move_orders').select('*').order('created_at', { ascending: false });
+    const { data: moLogs } = await supabase.from('move_orders').select('*').in('status', ['Approved', 'Completed']).order('created_at', { ascending: false });
     if (moLogs) setLatestMOs(moLogs);
     const { data: grnLogs, error: grnError } = await supabase.from('grns').select('*').order('created_at', { ascending: false });
     if (grnError) console.error('Error fetching GRNs:', grnError);
@@ -277,7 +277,7 @@ const DashboardOverview: React.FC<{
     const { data: poLogs, error: poError } = await supabase.from('purchase_orders').select('*').order('created_at', { ascending: false });
     if (poError) console.error('Error fetching POs:', poError);
     if (poLogs) setLatestPOs(poLogs);
-
+    
     const { data: items } = await supabase.from('items').select('*');
     if (items) {
       const types: Record<string, number> = {};
@@ -289,7 +289,7 @@ const DashboardOverview: React.FC<{
       if (octaneItem) setOctaneStock(Math.min(100, Math.round((octaneItem.on_hand_stock / 10000) * 100)));
     }
 
-    const { data: moveOrders } = await supabase.from('move_orders').select('*').order('created_at', { ascending: true });
+    const { data: moveOrders } = await supabase.from('move_orders').select('*').in('status', ['Approved', 'Completed']).order('created_at', { ascending: true });
     if (moveOrders) {
       // Daily Charts Filter
       const dStart = new Date(dailyStartDate);
@@ -688,7 +688,7 @@ const DashboardOverview: React.FC<{
                       ? `${firstItem.name || 'N/A'} (+${mo.items.length - 1})`
                       : (firstItem.name || 'N/A');
                     const totalQty = mo.items?.reduce((acc: number, i: any) => {
-                      const qty = mo.status === 'Completed' ? (Number(i.issuedQty) || 0) : (Number(i.reqQty) || 0);
+                      const qty = (Number(i.issuedQty) || Number(i.reqQty) || 0);
                       return acc + qty;
                     }, 0);
 
