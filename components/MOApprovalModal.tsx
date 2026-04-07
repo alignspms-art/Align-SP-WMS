@@ -223,7 +223,7 @@ const MOApprovalModal: React.FC<MOApprovalModalProps> = ({ mo, isOpen, onClose }
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto print-mode-active">
       {showPrintPreview ? (
         <div className="bg-white w-full max-w-[1100px] h-[95vh] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-300">
           {/* Print Preview Header */}
@@ -265,7 +265,7 @@ const MOApprovalModal: React.FC<MOApprovalModalProps> = ({ mo, isOpen, onClose }
 
           {/* Print Preview Content */}
           <div className="flex-1 overflow-y-auto bg-gray-50 p-12 scrollbar-thin">
-            <div className="bg-white shadow-2xl mx-auto ring-1 ring-gray-200">
+            <div className="bg-white shadow-2xl mx-auto ring-1 ring-gray-200 printable">
               <IssueSlipPrintTemplate mo={{ ...mo, items }} />
             </div>
           </div>

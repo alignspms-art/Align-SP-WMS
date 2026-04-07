@@ -16,10 +16,10 @@ const MODetailsModal: React.FC<MODetailsModalProps> = ({ mo, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto no-print">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto print-mode-active">
       <div className="bg-[#fcfcfc] w-full max-w-[1300px] rounded-xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in zoom-in-95 duration-300 flex flex-col my-auto max-h-[96vh]">
         {/* Modal Header Actions */}
-        <div className="flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white sticky top-0 z-10 shadow-sm">
+        <div className="flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white sticky top-0 z-10 shadow-sm no-print">
           <div className="flex items-center space-x-4">
             <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 rounded-xl transition-colors">
               <X size={20} />
@@ -48,7 +48,7 @@ const MODetailsModal: React.FC<MODetailsModalProps> = ({ mo, onClose }) => {
         </div>
 
         {/* Actions Footer Matching Screenshot */}
-        <div className="px-8 py-6 border-t border-gray-100 bg-white flex items-center space-x-4">
+        <div className="px-8 py-6 border-t border-gray-100 bg-white flex items-center space-x-4 no-print">
            <button 
              onClick={handlePrint}
              className="w-10 h-9 flex items-center justify-center bg-[#2d808e] text-white rounded hover:bg-[#256b78] transition-all shadow-md"

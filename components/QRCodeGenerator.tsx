@@ -11,10 +11,10 @@ interface QRCodeGeneratorProps {
 const QRCodePrintView = ({ labels, settings }: any) => {
   return (
     <div 
-      className="printable grid gap-4 p-4 bg-white" 
+      className="grid gap-4 p-4 bg-white" 
       style={{ 
         width: '100%',
-        gridTemplateColumns: `repeat(${settings.columnCount || 2}, minmax(0, 1fr))`
+        gridTemplateColumns: `repeat(${settings.columnCount || 2}, 1fr)`
       }}
     >
       {labels.map((label: any, idx: number) => (
