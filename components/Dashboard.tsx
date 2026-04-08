@@ -1263,7 +1263,7 @@ const Dashboard: React.FC = () => {
   });
 
   return (
-    <div className="flex h-screen bg-[#f3f4f6] overflow-hidden font-sans no-print relative">
+    <div className="flex h-screen bg-[#f3f4f6] overflow-hidden font-sans relative">
       {/* Mobile Overlay */}
       {!isSidebarCollapsed && (
         <div 

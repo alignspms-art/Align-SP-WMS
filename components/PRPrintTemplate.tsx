@@ -127,12 +127,12 @@ const PRPrintTemplate: React.FC<PRPrintTemplateProps> = ({
           <div className="flex items-baseline">
             <span className="font-bold w-24 shrink-0">Department:</span>
             {isPrinting ? (
-              <span className="px-1 py-0.5 text-gray-700">{pr.reqDpt || ''}</span>
+              <span className="px-1 py-0.5 text-gray-700">{pr.req_by_dept || pr.reqDpt || ''}</span>
             ) : (
               <input 
                 className="w-full bg-transparent border-none outline-none focus:bg-yellow-50 px-1 py-0.5 text-gray-700"
-                value={pr.reqDpt || ''}
-                onChange={(e) => onPrChange('reqDpt', e.target.value)}
+                value={pr.req_by_dept || pr.reqDpt || ''}
+                onChange={(e) => onPrChange('req_by_dept', e.target.value)}
               />
             )}
           </div>

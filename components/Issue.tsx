@@ -330,9 +330,9 @@ const Issue: React.FC = () => {
 
       {/* Issue Slip Preview Modal */}
       {previewMo && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto print-mode-active">
           <div className="bg-white w-full max-w-[1000px] h-[90vh] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-300">
-            <div className="flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white">
+            <div className="flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white no-print">
               <div className="flex items-center space-x-4">
                 <div className="bg-[#2d808e] p-2 rounded-lg text-white shadow-lg shadow-cyan-900/20">
                   <Printer size={20} />

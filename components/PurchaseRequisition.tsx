@@ -24,8 +24,10 @@ const PurchaseRequisition: React.FC = () => {
     // Apply column filters
     Object.entries(columnFilters).forEach(([column, value]) => {
       if (value) {
-        if (['pr_no', 'reference', 'req_by_name', 'reqDpt'].includes(column)) {
+        if (['pr_no', 'reference', 'req_by_name', 'req_by_dept'].includes(column)) {
           query = query.ilike(column, `%${value}%`);
+        } else if (column === 'reqDpt') {
+          query = query.ilike('req_by_dept', `%${value}%`);
         }
       }
     });
@@ -134,7 +136,7 @@ const PurchaseRequisition: React.FC = () => {
                 <th className="px-6 py-5 text-center">
                   <div className="flex items-center justify-center">
                     <span>REQ. DEPT.</span>
-                    <ColumnFilter columnName="Dept" currentValue={columnFilters.reqDpt || ''} onFilter={(val) => handleColumnFilter('reqDpt', val)} />
+                    <ColumnFilter columnName="Dept" currentValue={columnFilters.req_by_dept || columnFilters.reqDpt || ''} onFilter={(val) => handleColumnFilter('req_by_dept', val)} />
                   </div>
                 </th>
                 <th className="px-6 py-5 text-center w-32">ACTION</th>
@@ -174,7 +176,7 @@ const PurchaseRequisition: React.FC = () => {
                     <td className="px-6 py-4 text-center uppercase tracking-tighter text-gray-500">{item.req_by_name || 'USER'}</td>
                     <td className="px-6 py-4 text-center">
                       <span className="px-3 py-1 bg-gray-100 text-gray-500 rounded text-[9px] font-black uppercase tracking-tight">
-                        {item.reqDpt || 'LOCAL'}
+                        {item.req_by_dept || item.reqDpt || 'LOCAL'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">

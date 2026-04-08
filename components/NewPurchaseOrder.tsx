@@ -77,7 +77,7 @@ const NewPurchaseOrder: React.FC<NewPurchaseOrderProps> = ({ onBack, onSubmit })
                   poQty: 0, 
                   receivedQty: 0,
                   reqBy: pr.req_by_name || 'N/A',
-                  reqDept: pr.reqDpt || 'N/A',
+                  reqDept: pr.req_by_dept || pr.reqDpt || 'N/A',
                   unitPrice: Number(item.unitPrice) || 0
                 });
               }

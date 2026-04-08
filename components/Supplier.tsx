@@ -319,8 +319,8 @@ const Supplier: React.FC = () => {
                 <th className="px-6 py-5 w-16">SL</th>
                 <th className="px-6 py-5">
                   <div className="flex items-center justify-center">
-                    <span>Code</span>
-                    <ColumnFilter columnName="Code" currentValue={columnFilters.code || ''} onFilter={(val) => handleColumnFilter('code', val)} />
+                    <span>Supplier Number</span>
+                    <ColumnFilter columnName="Supplier Number" currentValue={columnFilters.code || ''} onFilter={(val) => handleColumnFilter('code', val)} />
                   </div>
                 </th>
                 <th className="px-6 py-5">

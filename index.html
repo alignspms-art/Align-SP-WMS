@@ -83,7 +83,7 @@
         }
 
         /* Ensure all parents of .printable are visible and don't clip it */
-        html, body, #root, #root > div, .print-mode-active, .print-mode-active > div {
+        html, body, #root, #root > div, .print-mode-active, .print-mode-active div {
           visibility: visible !important;
           overflow: visible !important;
           height: auto !important;
@@ -92,6 +92,8 @@
           transform: none !important;
           animation: none !important;
           opacity: 1 !important;
+          box-shadow: none !important;
+          border: none !important;
         }
 
         /* Specifically for the print-section used by label generators */

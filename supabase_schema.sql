@@ -62,6 +62,11 @@ CREATE TABLE IF NOT EXISTS requisitions (
     req_by_section TEXT,
     req_by_sub_section TEXT,
     req_by_shift TEXT,
+    contact TEXT,
+    email TEXT,
+    note TEXT,
+    images JSONB DEFAULT '[]'::jsonb,
+    justification JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -240,15 +245,34 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 
 -- Simple "Allow All" policies for development
+DROP POLICY IF EXISTS "Allow all" ON items;
 CREATE POLICY "Allow all" ON items FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all" ON suppliers;
 CREATE POLICY "Allow all" ON suppliers FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all" ON requisitions;
 CREATE POLICY "Allow all" ON requisitions FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all" ON purchase_orders;
 CREATE POLICY "Allow all" ON purchase_orders FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all" ON move_orders;
 CREATE POLICY "Allow all" ON move_orders FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all" ON grns;
 CREATE POLICY "Allow all" ON grns FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all" ON cost_centers;
 CREATE POLICY "Allow all" ON cost_centers FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all" ON cycle_counts;
 CREATE POLICY "Allow all" ON cycle_counts FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all" ON profiles;
 CREATE POLICY "Allow all" ON profiles FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all" ON transactions;
 CREATE POLICY "Allow all" ON transactions FOR ALL USING (true) WITH CHECK (true);
 
 -- 13. Initial Data

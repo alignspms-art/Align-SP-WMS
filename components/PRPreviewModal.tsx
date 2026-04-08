@@ -101,7 +101,7 @@ const PRPreviewModal: React.FC<PRPreviewModalProps> = ({ pr: initialPr, onClose 
       const totalValue = (pr.items || []).reduce((acc: number, item: any) => acc + (Number(item.reqQty || 0) * Number(item.unitPrice || 0)), 0);
 
       // Clean payload to ensure only valid columns are sent
-      const payload = {
+      const payload: any = {
         id: pr.id,
         pr_no: pr.pr_no,
         reference: pr.reference,
@@ -110,7 +110,7 @@ const PRPreviewModal: React.FC<PRPreviewModalProps> = ({ pr: initialPr, onClose 
         req_by_name: pr.req_by_name,
         contact: pr.contact,
         email: pr.email,
-        reqDpt: pr.reqDpt,
+        req_by_dept: pr.req_by_dept || pr.reqDpt,
         note: pr.note,
         total_value: totalValue,
         items: pr.items,
@@ -119,9 +119,30 @@ const PRPreviewModal: React.FC<PRPreviewModalProps> = ({ pr: initialPr, onClose 
         updated_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
+      let { error } = await supabase
         .from('requisitions')
         .upsert([payload]);
+
+      // Handle missing columns gracefully if schema cache is not updated
+      if (error && (
+        error.message.includes("column \"contact\" of relation \"requisitions\" does not exist") || 
+        error.message.includes("Could not find the 'contact' column") ||
+        error.code === 'PGRST204'
+      )) {
+        console.warn("Retrying PR save without missing columns...");
+        const fallbackPayload = { ...payload };
+        delete fallbackPayload.contact;
+        delete fallbackPayload.email;
+        delete fallbackPayload.note;
+        delete fallbackPayload.images;
+        delete fallbackPayload.justification;
+        
+        // Store extra info in header_text if possible
+        fallbackPayload.header_text = `Contact: ${pr.contact}, Email: ${pr.email}${pr.note ? `, Note: ${pr.note}` : ''}`;
+        
+        const retry = await supabase.from('requisitions').upsert([fallbackPayload]);
+        error = retry.error;
+      }
 
       if (error) throw error;
       

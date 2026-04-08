@@ -113,7 +113,7 @@ const ReceiveReport: React.FC = () => {
 
       // Process Requisitions (PR Data)
       prData.forEach(pr => {
-        const dept = pr.reqDpt || 'OTHERS';
+        const dept = pr.req_by_dept || pr.reqDpt || 'OTHERS';
         if (!newDeptSummary[dept]) newDeptSummary[dept] = { items: new Set(), prQty: 0, qty: 0, amt: 0 };
         
         (pr.items || []).forEach((item: any) => {

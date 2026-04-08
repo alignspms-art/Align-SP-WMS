@@ -177,7 +177,7 @@ const NewPurchaseRequisition: React.FC<NewPurchaseRequisitionProps> = ({ onBack,
     
     const totalValue = items.reduce((sum, item) => sum + (Number(item.reqQty) * Number(item.unitPrice) || 0), 0);
     
-    const prPayload = {
+    const prPayload: any = {
       pr_no: prNo,
       reference: prReference,
       type: supplierType,
@@ -185,16 +185,37 @@ const NewPurchaseRequisition: React.FC<NewPurchaseRequisitionProps> = ({ onBack,
       req_by_name: requesterName,
       contact: contactNumber,
       email: emailAddress,
-      reqDpt: department,
+      req_by_dept: department,
       note: prNote,
       total_value: totalValue,
       items: items,
-      images: [], // Ensure initialized
-      justification: [] // Ensure initialized
+      images: [], 
+      justification: [] 
     };
 
     try {
-      const { error } = await supabase.from('requisitions').upsert([prPayload]);
+      let { error } = await supabase.from('requisitions').upsert([prPayload]);
+
+      // Handle missing columns gracefully if schema cache is not updated
+      if (error && (
+        error.message.includes("column \"contact\" of relation \"requisitions\" does not exist") || 
+        error.message.includes("Could not find the 'contact' column") ||
+        error.code === 'PGRST204'
+      )) {
+        console.warn("Retrying PR save without missing columns...");
+        const fallbackPayload = { ...prPayload };
+        delete fallbackPayload.contact;
+        delete fallbackPayload.email;
+        delete fallbackPayload.note;
+        delete fallbackPayload.images;
+        delete fallbackPayload.justification;
+        
+        // Store extra info in header_text if possible
+        fallbackPayload.header_text = `Contact: ${contactNumber}, Email: ${emailAddress}${prNote ? `, Note: ${prNote}` : ''}`;
+        
+        const retry = await supabase.from('requisitions').upsert([fallbackPayload]);
+        error = retry.error;
+      }
 
       if (!error) {
         onSubmit(prPayload);

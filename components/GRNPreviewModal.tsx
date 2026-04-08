@@ -54,7 +54,7 @@ const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose }) => 
             // Try by po_no first
             const { data: poByNo } = await supabase
               .from('purchase_orders')
-              .select('*')
+              .select('*, suppliers(code)')
               .eq('po_no', targetGrn.source_ref)
               .maybeSingle();
             
@@ -66,7 +66,7 @@ const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose }) => 
               if (uuidRegex.test(targetGrn.source_ref)) {
                 const { data: poById } = await supabase
                   .from('purchase_orders')
-                  .select('*')
+                  .select('*, suppliers(code)')
                   .eq('id', targetGrn.source_ref)
                   .maybeSingle();
                 if (poById) foundPo = poById;
@@ -78,7 +78,7 @@ const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose }) => 
           if (!foundPo && targetGrn.items?.[0]?.poNo) {
             const { data: poFromItem } = await supabase
               .from('purchase_orders')
-              .select('*')
+              .select('*, suppliers(code)')
               .eq('po_no', targetGrn.items[0].poNo)
               .maybeSingle();
             if (poFromItem) foundPo = poFromItem;
@@ -158,7 +158,7 @@ const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose }) => 
       [],
       ["Goods Received Note"],
       [],
-      ["Supplier Number:", poData?.supplier_id || "", "", "GRN No. / Date:", `${grnData.grn_no} / ${new Date(grnData.created_at).toLocaleDateString('en-GB')}`],
+      ["Supplier Number:", poData?.suppliers?.code || "", "", "GRN No. / Date:", `${grnData.grn_no} / ${new Date(grnData.created_at).toLocaleDateString('en-GB')}`],
       ["Supplier Name:", poData?.supplier_name || "", "", "Delivery Note:", grnData.invoice_no || ""],
       ["PO Number:", grnData.source_ref || "", "", "Bill of Lading:", grnData.bl_mushok_no || ""],
       ["PO Date:", poData ? new Date(poData.created_at).toLocaleDateString('en-GB') : "", "", "B/L Container:", grnData.bl_container || ""],
@@ -272,7 +272,7 @@ const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose }) => 
             {/* Info Section */}
             <div className="grid grid-cols-2 gap-8 mb-6 text-sm">
               <div className="space-y-1">
-                <div className="flex"><span className="w-32 font-bold">Supplier Number:</span> <span>{poData?.supplier_id || ''}</span></div>
+                <div className="flex"><span className="w-32 font-bold">Supplier Number:</span> <span>{poData?.suppliers?.code || ''}</span></div>
                 <div className="flex"><span className="w-32 font-bold">Supplier Name:</span> <span>{poData?.supplier_name || ''}</span></div>
                 <div className="flex"><span className="w-32 font-bold">PO Number:</span> <span>{poData?.po_no || grnData.source_ref || ''}</span></div>
                 <div className="flex"><span className="w-32 font-bold">PO Date:</span> <span>{poData ? new Date(poData.created_at).toLocaleDateString('en-GB') : ''}</span></div>

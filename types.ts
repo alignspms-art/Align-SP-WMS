@@ -62,7 +62,16 @@ export interface Requisition {
   type: string;
   total_value: number;
   created_at: string;
+  updated_at?: string;
   req_by_name?: string;
+  req_by_dept?: string;
+  reqDpt?: string; // Backward compatibility
+  contact?: string;
+  email?: string;
+  note?: string;
+  items?: any[];
+  images?: string[];
+  justification?: any[];
 }
 
 export interface AuthState {

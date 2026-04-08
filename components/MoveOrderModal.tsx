@@ -263,13 +263,13 @@ const MoveOrderModal: React.FC<MoveOrderModalProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 px-4 bg-black/30 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-white w-full max-w-[1400px] rounded-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 px-4 bg-black/30 backdrop-blur-sm overflow-y-auto print-mode-active">
+      <div className={`bg-white w-full max-w-[1400px] rounded-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200`}>
         
         {showSuccess && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto print-mode-active">
             <div className="bg-[#fcfcfc] w-full max-w-[1100px] rounded-xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[96vh] animate-in fade-in zoom-in duration-300">
-              <div className="flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white sticky top-0 z-10">
+              <div className="flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white sticky top-0 z-10 no-print">
                 <div className="flex items-center space-x-4">
                   <div className="bg-[#2d808e] p-2 rounded-lg text-white shadow-lg shadow-cyan-900/20">
                     <Printer size={20} />
@@ -314,14 +314,14 @@ const MoveOrderModal: React.FC<MoveOrderModalProps> = ({ isOpen, onClose }) => {
                   }} />
                 </div>
               </div>
-              <div className="px-8 py-4 bg-white border-t border-gray-100 text-center">
+              <div className="px-8 py-4 bg-white border-t border-gray-100 text-center no-print">
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Move Order Request Submitted Successfully • Pending Approval</p>
               </div>
             </div>
           </div>
         )}
 
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white sticky top-0 z-10">
+        <div className={`flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white sticky top-0 z-10 ${showSuccess ? 'no-print' : ''}`}>
           <div className="flex items-center space-x-3">
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
               <X size={20} />
@@ -355,7 +355,7 @@ const MoveOrderModal: React.FC<MoveOrderModalProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        <div className="p-8 space-y-8">
+        <div className={`p-8 space-y-8 ${showSuccess ? 'no-print' : ''}`}>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-bold text-[#2d808e]">TNX.NO</label>

@@ -150,7 +150,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="space-y-6 font-sans antialiased text-gray-800 animate-slide-up no-print">
+    <div className="space-y-6 font-sans antialiased text-gray-800 animate-slide-up">
       <div className="flex items-center space-x-2 text-[11px] font-bold text-[#2d808e] uppercase tracking-wider">
         <Home size={14} className="text-gray-400" />
         <span className="text-gray-300">/</span>
