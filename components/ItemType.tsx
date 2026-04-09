@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Plus, Edit2, Search, X } from 'lucide-react';
+import { Home, Plus, Edit2, Search, X, Trash2 } from 'lucide-react';
 
 interface TypeItem {
   sl: number;
@@ -51,6 +51,12 @@ const ItemType: React.FC = () => {
       setTypes([...types, { sl: nextSl, ...formData }]);
     }
     setIsModalOpen(false);
+  };
+
+  const handleDelete = (sl: number) => {
+    if (window.confirm('Are you sure you want to delete this Item Type?')) {
+      setTypes(types.filter(t => t.sl !== sl));
+    }
   };
 
   return (
@@ -107,12 +113,22 @@ const ItemType: React.FC = () => {
                   <td className="px-6 py-4 font-bold text-[#2d808e]">{type.name}</td>
                   <td className="px-6 py-4">{type.description}</td>
                   <td className="px-6 py-4 text-center">
-                    <button 
-                      onClick={() => handleOpenModal(type)}
-                      className="p-1.5 text-blue-500 hover:bg-blue-50 border border-blue-100 rounded transition-all"
-                    >
-                      <Edit2 size={12} />
-                    </button>
+                    <div className="flex items-center justify-center space-x-2">
+                      <button 
+                        onClick={() => handleOpenModal(type)}
+                        className="p-1.5 text-blue-500 hover:bg-blue-50 border border-blue-100 rounded transition-all"
+                        title="Edit"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(type.sl)}
+                        className="p-1.5 text-red-500 hover:bg-red-50 border border-red-100 rounded transition-all"
+                        title="Delete"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
