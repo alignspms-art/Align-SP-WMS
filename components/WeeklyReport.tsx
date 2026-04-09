@@ -154,11 +154,11 @@ const WeeklyReport: React.FC = () => {
       ]);
 
       slide1.addTable([
-        tableHeader.map(h => ({ text: h, options: { fill: '2D808E', color: 'FFFFFF', bold: true, align: 'center' as const, fontSize: 11 } })),
+        tableHeader.map(h => ({ text: h, options: { fill: { color: '2D808E' }, color: 'FFFFFF', bold: true, align: 'center' as const, fontSize: 11 } })),
         ...tableRows.map((r, i) => r.map(c => ({ 
           text: c, 
           options: { 
-            fill: i === tableRows.length - 1 ? 'F1F5F9' : undefined,
+            fill: i === tableRows.length - 1 ? { color: 'F1F5F9' } : undefined,
             bold: i === tableRows.length - 1,
             align: (i === tableRows.length - 1 || r.indexOf(c) > 0 ? 'center' : 'left') as any,
             color: i === tableRows.length - 1 ? '2D808E' : '334155',
