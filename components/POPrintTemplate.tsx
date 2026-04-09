@@ -28,8 +28,7 @@ const POPrintTemplate: React.FC<POPrintTemplateProps> = ({ po, onPoChange, isPri
       <div className="flex justify-between items-start mb-8 relative">
         <div className="w-24 h-24"></div> {/* Spacer for symmetry */}
         <div className="flex-1 text-center">
-          <h1 className="text-3xl font-black text-gray-900 leading-tight mb-1">Fair Technology Limited</h1>
-          <p className="text-[11px] text-gray-600 font-medium">Plot- 12/A & 12/B, Block-C, Kaliakoir Hi-Tech Park</p>
+          <h1 className="text-3xl font-black text-gray-900 leading-tight mb-1">Maheen Label Tex Ltd.</h1>
           <p className="text-[11px] text-gray-600 font-medium">Gazipur, Bangladesh-1750. #+880 1787-670 786</p>
           <div className="mt-4">
             <h2 className="text-lg font-black uppercase tracking-widest">PURCHASE ORDER (PO)</h2>
@@ -59,7 +58,7 @@ const POPrintTemplate: React.FC<POPrintTemplateProps> = ({ po, onPoChange, isPri
         
         {/* Middle Column: Buyer Details */}
         <div className="space-y-1">
-          <p className="flex items-baseline"><span className="font-bold w-24 shrink-0">Buyer Name:</span> <span className="text-gray-700">Fair Technology Limited</span></p>
+          <p className="flex items-baseline"><span className="font-bold w-24 shrink-0">Buyer Name:</span> <span className="text-gray-700">Maheen Label Tex Ltd.</span></p>
           <p className="flex items-baseline text-[10px]"><span className="font-bold w-24 shrink-0">Buyer Address:</span> <span className="text-gray-700">76/B, Khawaja Palace, Road-11 Banani, Dhaka, Bangladesh, 1213.</span></p>
           <p className="flex items-baseline"><span className="font-bold w-24 shrink-0">Buyer BIN Name:</span> <span className="text-gray-700">XXXXX</span></p>
           <p className="flex items-baseline"><span className="font-bold w-24 shrink-0">Buyer BIN No.:</span> <span className="text-gray-700">XXXX</span></p>
@@ -184,7 +183,7 @@ const POPrintTemplate: React.FC<POPrintTemplateProps> = ({ po, onPoChange, isPri
                   placeholder={canEdit ? "Type Name..." : ""}
                 />
               )}
-              <p className="text-[9px] text-gray-400 font-medium">{sig.field === 'accepted_by' ? 'Supplier' : 'Fair Technology Limited'}</p>
+              <p className="text-[9px] text-gray-400 font-medium">{sig.field === 'accepted_by' ? 'Supplier' : 'Maheen Label Tex Ltd.'}</p>
             </div>
           );
         })}

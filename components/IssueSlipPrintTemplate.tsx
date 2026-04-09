@@ -25,10 +25,10 @@ const IssueSlipPrintTemplate: React.FC<IssueSlipPrintTemplateProps> = ({ mo }) =
         <div className="inline-block bg-black text-white px-8 py-1.5 rounded-full text-sm font-black uppercase tracking-[0.2em] mb-4 shadow-sm">
           Material Issue Slip
         </div>
-        <h1 className="text-2xl font-black text-gray-900 tracking-tight uppercase mb-0.5">Fair Technology Limited</h1>
-        <h2 className="text-lg font-black text-gray-800 uppercase tracking-tighter mb-0.5">Hyundai Manufacturing Plant</h2>
+        <h1 className="text-2xl font-black text-gray-900 tracking-tight uppercase mb-0.5">Maheen Label Tex Ltd.</h1>
+        <h2 className="text-lg font-black text-gray-800 uppercase tracking-tighter mb-0.5">Maheen Dizayn Etiket (BD.) Limited</h2>
         <p className="text-[10px] text-gray-600 uppercase font-bold tracking-tight">
-          Hi-tech City (Plot no.-12, Block- 6), Kaliakoir, Gazipur, Bangladesh.
+          Factory:Khurdukhosh Parra, Mijmiji, P.S: Siddhirgonj, Dis:Narayangonj, Bangladesh.
         </p>
       </div>
 

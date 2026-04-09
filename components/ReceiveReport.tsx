@@ -12,21 +12,20 @@ const COLORS = ['#2d808e', '#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899'
 
 const ReceiveReport: React.FC = () => {
   const [loading, setLoading] = useState(true);
+  const [reportMode, setReportMode] = useState<'Monthly' | '6 Days'>('Monthly');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   
   // Master Data
   const [allDepartments, setAllDepartments] = useState<string[]>([]);
   const [allItemTypes, setAllItemTypes] = useState<string[]>([]);
   
   // Editable Data
-  const [deptWiseData, setDeptWiseData] = useState<Record<string, Record<string, number>>>({
-    '1st Week': {}, '2nd Week': {}, '3rd Week': {}, '4th Week': {}
-  });
-  const [typeWiseData, setTypeWiseData] = useState<Record<string, Record<string, number>>>({
-    '1st Week': {}, '2nd Week': {}, '3rd Week': {}, '4th Week': {}
-  });
+  const [deptWiseData, setDeptWiseData] = useState<Record<string, Record<string, number>>>({});
+  const [typeWiseData, setTypeWiseData] = useState<Record<string, Record<string, number>>>({});
   const [deptSummaryData, setDeptSummaryData] = useState<Record<string, { items: number, prQty: number, qty: number, amt: number }>>({});
+  const [timeLabels, setTimeLabels] = useState<string[]>([]);
 
   const months = [
     "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
@@ -44,10 +43,12 @@ const ReceiveReport: React.FC = () => {
         supabase.from('items').select('type').not('type', 'is', null)
       ]);
 
-      const depts = Array.from(new Set(deptRes.data?.map(d => d.name) || [])).sort();
+      const depts = Array.from(new Set(deptRes.data?.map(d => d.name) || []))
+        .filter(d => d.toUpperCase() !== 'MAINTENANCE' && d.toUpperCase() !== 'MAINT')
+        .sort();
       const types = Array.from(new Set(typeRes.data?.map(t => t.type) || [])).sort();
       
-      const finalDepts = depts.length > 0 ? [...depts] : ['PRODUCTION', 'ADMIN', 'PROJECT', 'MAINT', 'MMT', 'OTHERS'];
+      const finalDepts = depts.length > 0 ? [...depts] : ['PRODUCTION', 'ADMIN', 'PROJECT', 'MMT', 'OTHERS'];
       if (depts.length > 0 && !finalDepts.includes('OTHERS')) {
         finalDepts.push('OTHERS');
       }
@@ -56,10 +57,34 @@ const ReceiveReport: React.FC = () => {
       setAllDepartments(finalDepts);
       setAllItemTypes(finalTypes);
 
-      // 2. Fetch Transaction Data and Requisitions for the selected period
-      const startDate = new Date(selectedYear, selectedMonth, 1).toISOString();
-      const endDate = new Date(selectedYear, selectedMonth + 1, 1).toISOString();
+      // 2. Determine Date Range
+      let startDate: string;
+      let endDate: string;
+      let labels: string[] = [];
 
+      if (reportMode === 'Monthly') {
+        startDate = new Date(selectedYear, selectedMonth, 1).toISOString();
+        endDate = new Date(selectedYear, selectedMonth + 1, 1).toISOString();
+        labels = ['1st Week', '2nd Week', '3rd Week', '4th Week'];
+      } else {
+        const end = new Date(selectedDate);
+        end.setHours(23, 59, 59, 999);
+        const start = new Date(selectedDate);
+        start.setDate(start.getDate() - 5);
+        start.setHours(0, 0, 0, 0);
+        
+        startDate = start.toISOString();
+        endDate = end.toISOString();
+
+        for (let i = 0; i < 6; i++) {
+          const d = new Date(start);
+          d.setDate(d.getDate() + i);
+          labels.push(d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }));
+        }
+      }
+      setTimeLabels(labels);
+
+      // 3. Fetch Transaction Data and Requisitions for the selected period
       const [tnxRes, prRes] = await Promise.all([
         supabase.from('transactions')
           .select('*')
@@ -78,7 +103,7 @@ const ReceiveReport: React.FC = () => {
       const tnxData = tnxRes.data || [];
       const prData = prRes.data || [];
 
-      // 3. Fetch Item Master Data for prices
+      // 4. Fetch Item Master Data for prices
       const skus = Array.from(new Set([
         ...tnxData.map(t => t.item_sku),
         ...prData.flatMap(pr => (pr.items || []).map((i: any) => i.sku))
@@ -97,13 +122,14 @@ const ReceiveReport: React.FC = () => {
         }, {});
       }
 
-      // 4. Process Data for Tables
-      const newDeptWise: Record<string, Record<string, number>> = {
-        '1st Week': {}, '2nd Week': {}, '3rd Week': {}, '4th Week': {}
-      };
-      const newTypeWise: Record<string, Record<string, number>> = {
-        '1st Week': {}, '2nd Week': {}, '3rd Week': {}, '4th Week': {}
-      };
+      // 5. Process Data for Tables
+      const newDeptWise: Record<string, Record<string, number>> = {};
+      const newTypeWise: Record<string, Record<string, number>> = {};
+      labels.forEach(l => {
+        newDeptWise[l] = {};
+        newTypeWise[l] = {};
+      });
+
       const newDeptSummary: Record<string, { items: Set<string>, prQty: number, qty: number, amt: number }> = {};
 
       // Initialize summary for all departments
@@ -125,11 +151,18 @@ const ReceiveReport: React.FC = () => {
 
       // Process Transactions (Actual Received Data)
       tnxData.forEach(tnx => {
-        const date = new Date(tnx.created_at).getDate();
-        let week = '4th Week';
-        if (date <= 7) week = '1st Week';
-        else if (date <= 14) week = '2nd Week';
-        else if (date <= 21) week = '3rd Week';
+        const tnxDate = new Date(tnx.created_at);
+        let label = '';
+
+        if (reportMode === 'Monthly') {
+          const date = tnxDate.getDate();
+          if (date <= 7) label = '1st Week';
+          else if (date <= 14) label = '2nd Week';
+          else if (date <= 21) label = '3rd Week';
+          else label = '4th Week';
+        } else {
+          label = tnxDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        }
 
         const dept = tnx.department || 'OTHERS';
         const item = itemMap[tnx.item_sku] || {};
@@ -138,8 +171,12 @@ const ReceiveReport: React.FC = () => {
         const price = Number(tnx.unit_price) || 0; // Direct PO price from transaction
         const amt = qty * price;
 
-        newDeptWise[week][dept] = (newDeptWise[week][dept] || 0) + qty;
-        newTypeWise[week][type] = (newTypeWise[week][type] || 0) + qty;
+        if (newDeptWise[label]) {
+          newDeptWise[label][dept] = (newDeptWise[label][dept] || 0) + qty;
+        }
+        if (newTypeWise[label]) {
+          newTypeWise[label][type] = (newTypeWise[label][type] || 0) + qty;
+        }
 
         if (!newDeptSummary[dept]) newDeptSummary[dept] = { items: new Set(), prQty: 0, qty: 0, amt: 0 };
         newDeptSummary[dept].items.add(tnx.item_sku);
@@ -166,7 +203,7 @@ const ReceiveReport: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, reportMode, selectedDate]);
 
   useEffect(() => {
     fetchData();
@@ -202,10 +239,13 @@ const ReceiveReport: React.FC = () => {
 
     const monthName = months[selectedMonth];
     const yearStr = selectedYear.toString();
+    const reportTitle = reportMode === 'Monthly' 
+      ? `ITEM RECEIVED SUMMARY OF ${monthName}'${yearStr}`
+      : `ITEM RECEIVED SUMMARY (6 DAYS ENDING ${selectedDate})`;
 
     // Slide 1: Item Received Summary
     const slide1 = pres.addSlide();
-    slide1.addText(`ITEM RECEIVED SUMMARY OF ${monthName}'${yearStr}`, { 
+    slide1.addText(reportTitle, { 
       x: 0.5, y: 0.3, w: 12, fontSize: 18, bold: true, color: '003366', fontFace: 'Arial' 
     });
 
@@ -214,12 +254,12 @@ const ReceiveReport: React.FC = () => {
       x: 0.5, y: 0.8, w: 12.3, h: 0.4, fontSize: 12, bold: true, align: 'center', fill: { color: 'B9CFED' }, color: '000000' 
     });
 
-    const deptHeader = ['DEPARTMENT', ...allDepartments, 'TOTAL'];
-    const deptRows = ['1st Week', '2nd Week', '3rd Week', '4th Week'].map(week => {
-      const row = [week];
+    const deptHeader = ['DEPARTMENT', ...activeDepartments, 'TOTAL'];
+    const deptRows = timeLabels.map(label => {
+      const row = [label];
       let rowTotal = 0;
-      allDepartments.forEach(dept => {
-        const val = deptWiseData[week][dept] || 0;
+      activeDepartments.forEach(dept => {
+        const val = deptWiseData[label][dept] || 0;
         row.push(val === 0 ? '-' : val.toString());
         rowTotal += val;
       });
@@ -230,8 +270,8 @@ const ReceiveReport: React.FC = () => {
     // Total Row for Dept Wise
     const deptTotalRow = ['Total'];
     let grandTotal = 0;
-    allDepartments.forEach(dept => {
-      const colTotal = ['1st Week', '2nd Week', '3rd Week', '4th Week'].reduce((acc, week) => acc + (deptWiseData[week][dept] || 0), 0);
+    activeDepartments.forEach(dept => {
+      const colTotal = timeLabels.reduce((acc, label) => acc + (deptWiseData[label][dept] || 0), 0);
       deptTotalRow.push(colTotal.toString());
       grandTotal += colTotal;
     });
@@ -249,11 +289,11 @@ const ReceiveReport: React.FC = () => {
     });
 
     const typeHeader = ['ITEM TYPE', ...allItemTypes, 'SUB-TOTAL'];
-    const typeRows = ['1st Week', '2nd Week', '3rd Week', '4th Week'].map(week => {
-      const row = [week];
+    const typeRows = timeLabels.map(label => {
+      const row = [label];
       let rowTotal = 0;
       allItemTypes.forEach(type => {
-        const val = typeWiseData[week][type] || 0;
+        const val = typeWiseData[label][type] || 0;
         row.push(val === 0 ? '-' : val.toString());
         rowTotal += val;
       });
@@ -265,7 +305,7 @@ const ReceiveReport: React.FC = () => {
     const typeTotalRow = ['Total'];
     let typeGrandTotal = 0;
     allItemTypes.forEach(type => {
-      const colTotal = ['1st Week', '2nd Week', '3rd Week', '4th Week'].reduce((acc, week) => acc + (typeWiseData[week][type] || 0), 0);
+      const colTotal = timeLabels.reduce((acc, label) => acc + (typeWiseData[label][type] || 0), 0);
       typeTotalRow.push(colTotal.toString());
       typeGrandTotal += colTotal;
     });
@@ -279,70 +319,54 @@ const ReceiveReport: React.FC = () => {
 
     // Slide 2: Charts & Summary
     const slide2 = pres.addSlide();
-    slide2.addText(`DEPT WISE ITEM RECEIVED - ${monthName}'${yearStr}`, { 
-      x: 0.5, y: 0.3, w: 10, fontSize: 18, bold: true, color: '000000' 
+    slide2.addText(reportMode === 'Monthly' ? `DEPT WISE ITEM RECEIVED - ${monthName}'${yearStr}` : `DEPT WISE ITEM RECEIVED (6 DAYS)`, { 
+      x: 0.5, y: 0.2, w: 10, fontSize: 18, bold: true, color: '000000' 
     });
-    slide2.addText('FAIR GROUP', { x: 11.5, y: 0.3, w: 1.5, fontSize: 14, bold: true, color: '2d808e', align: 'right' });
+    slide2.addText('MAHEEN LABEL TEX LTD.', { x: 10.5, y: 0.2, w: 2.5, fontSize: 12, bold: true, color: '2d808e', align: 'right' });
 
-    // Summary Table (Top Right)
-    const summaryHeader = ['Department', 'Received_Items', 'PR_Qty', 'Received_Qty', 'Received_Amt'];
-    const summaryRows = allDepartments.map(dept => [
-      dept,
-      (deptSummaryData[dept]?.items || 0).toString(),
-      (deptSummaryData[dept]?.prQty || 0).toString(),
-      (deptSummaryData[dept]?.qty || 0).toString(),
-      (deptSummaryData[dept]?.amt || 0).toFixed(2)
-    ]);
-    
-    // Grand Total for Summary
-    const summaryTotal = ['Grand Total', 
-      allDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.items || 0), 0).toString(),
-      allDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.prQty || 0), 0).toString(),
-      allDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.qty || 0), 0).toString(),
-      allDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.amt || 0), 0).toFixed(2)
-    ];
-    summaryRows.push(summaryTotal);
-
-    slide2.addTable([summaryHeader.map(h => ({ text: h, options: { fill: { color: '4472C4' }, color: 'FFFFFF', bold: true, align: 'center' as const } })), 
-      ...summaryRows.map((r, i) => r.map(c => ({ text: c, options: { align: (i === summaryRows.length - 1 ? 'center' : 'left') as any, fill: i === summaryRows.length - 1 ? { color: '4472C4' } : undefined, color: i === summaryRows.length - 1 ? 'FFFFFF' : undefined } })))], 
-      { x: 8.5, y: 0.8, w: 4.5, fontSize: 9 }
-    );
-
-    // Charts
-    // Bar Chart
+    // Charts - Left Side (Bar & Line)
+    // Bar Chart (PR & Received Qty)
     slide2.addChart(pres.ChartType.bar, [
       {
+        name: 'PR Qty',
+        labels: activeDepartments,
+        values: activeDepartments.map(d => deptSummaryData[d]?.prQty || 0)
+      },
+      {
         name: 'Received Qty',
-        labels: allDepartments,
-        values: allDepartments.map(d => deptSummaryData[d]?.qty || 0)
+        labels: activeDepartments,
+        values: activeDepartments.map(d => deptSummaryData[d]?.qty || 0)
       }
     ], { 
-      x: 0.5, y: 1.0, w: 7.5, h: 3.0, 
+      x: 0.5, y: 0.8, w: 6.5, h: 3.2, 
       showLegend: true, legendPos: 't', 
-      title: 'Received Quantity by Department',
+      title: 'Quantity by Department',
       showValue: true,
+      barGapWidthPct: 20,
       catGridLine: { style: 'none' },
       valGridLine: { style: 'none' }
     });
 
-    // Line Chart
+    // Line Chart (Received Amt) - Below Bar Chart
     slide2.addChart(pres.ChartType.line, [
       {
         name: 'Received Amt',
-        labels: allDepartments,
-        values: allDepartments.map(d => deptSummaryData[d]?.amt || 0)
+        labels: activeDepartments,
+        values: activeDepartments.map(d => deptSummaryData[d]?.amt || 0)
       }
     ], { 
-      x: 0.5, y: 4.0, w: 7.5, h: 2.5, 
+      x: 0.5, y: 4.2, w: 6.5, h: 2.8, 
       showLegend: true, legendPos: 't', 
       title: 'Received Amount by Department',
       showValue: true,
+      lineDataSymbol: 'circle',
+      lineDataSymbolSize: 6,
       catGridLine: { style: 'none' },
       valGridLine: { style: 'none' }
     });
 
-    // Pie Chart
-    const pieDataForPpt = allDepartments
+    // Donut Chart - Top Right
+    const pieDataForPpt = activeDepartments
       .filter(d => (deptSummaryData[d]?.qty || 0) > 0);
 
     if (pieDataForPpt.length > 0) {
@@ -353,16 +377,39 @@ const ReceiveReport: React.FC = () => {
           values: pieDataForPpt.map(d => deptSummaryData[d]?.qty || 0)
         }
       ], { 
-        x: 8.5, y: 4.5, w: 4.5, h: 2.5, 
+        x: 7.5, y: 0.8, w: 5.5, h: 3.5, 
         showLegend: true, 
         legendPos: 'r',
         showValue: true,
         showPercent: true,
+        holeSize: 50, // Donut effect
         dataLabelPosition: 'outEnd',
-        dataLabelFontSize: 9,
-        dataLabelFormatCode: '#,##0'
+        dataLabelFontSize: 9
       });
     }
+
+    // Summary Table - Bottom Right
+    const summaryHeader = ['Department', 'Received_Items', 'PR_Qty', 'Received_Qty', 'Received_Amt'];
+    const summaryRows = activeDepartments.map(dept => [
+      dept,
+      (deptSummaryData[dept]?.items || 0).toString(),
+      (deptSummaryData[dept]?.prQty || 0).toString(),
+      (deptSummaryData[dept]?.qty || 0).toString(),
+      (deptSummaryData[dept]?.amt || 0).toFixed(2)
+    ]);
+    
+    const summaryTotal = ['Grand Total', 
+      activeDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.items || 0), 0).toString(),
+      activeDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.prQty || 0), 0).toString(),
+      activeDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.qty || 0), 0).toString(),
+      activeDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.amt || 0), 0).toFixed(2)
+    ];
+    summaryRows.push(summaryTotal);
+
+    slide2.addTable([summaryHeader.map(h => ({ text: h, options: { fill: { color: '4472C4' }, color: 'FFFFFF', bold: true, align: 'center' as const } })), 
+      ...summaryRows.map((r, i) => r.map(c => ({ text: c, options: { align: (i === summaryRows.length - 1 ? 'center' : 'left') as any, fill: i === summaryRows.length - 1 ? { color: '4472C4' } : undefined, color: i === summaryRows.length - 1 ? 'FFFFFF' : undefined } })))], 
+      { x: 7.5, y: 4.5, w: 5.5, fontSize: 9, border: { pt: 1, color: 'FFFFFF' } }
+    );
 
     pres.writeFile({ fileName: `Receive_Report_${monthName}_${yearStr}.pptx` });
   };
@@ -376,14 +423,23 @@ const ReceiveReport: React.FC = () => {
     );
   }
 
-  const chartData = allDepartments.map(dept => ({
+  const activeDepartments = allDepartments.filter(dept => {
+    const hasTimeData = timeLabels.some(label => (deptWiseData[label]?.[dept] || 0) > 0);
+    const hasSummaryData = (deptSummaryData[dept]?.items || 0) > 0 || 
+                           (deptSummaryData[dept]?.prQty || 0) > 0 || 
+                           (deptSummaryData[dept]?.qty || 0) > 0 || 
+                           (deptSummaryData[dept]?.amt || 0) > 0;
+    return hasTimeData || hasSummaryData;
+  });
+
+  const chartData = activeDepartments.map(dept => ({
     name: dept,
     prQty: deptSummaryData[dept]?.prQty || 0,
     qty: deptSummaryData[dept]?.qty || 0,
     amt: deptSummaryData[dept]?.amt || 0
   }));
 
-  const pieData = allDepartments.map(dept => ({
+  const pieData = activeDepartments.map(dept => ({
     name: dept,
     value: deptSummaryData[dept]?.qty || 0
   })).filter(d => d.value > 0);
@@ -402,20 +458,46 @@ const ReceiveReport: React.FC = () => {
         
         <div className="flex items-center space-x-3">
           <div className="flex items-center bg-white rounded-lg border border-gray-100 p-1 shadow-sm">
-            <select 
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="bg-transparent text-[11px] font-black uppercase px-3 py-1 outline-none border-r border-gray-100"
+            <button 
+              onClick={() => setReportMode('Monthly')}
+              className={`px-3 py-1 text-[10px] font-black rounded ${reportMode === 'Monthly' ? 'bg-[#2d808e] text-white' : 'text-gray-400 hover:bg-gray-50'}`}
             >
-              {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
-            </select>
-            <select 
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="bg-transparent text-[11px] font-black uppercase px-3 py-1 outline-none"
+              MONTHLY
+            </button>
+            <button 
+              onClick={() => setReportMode('6 Days')}
+              className={`px-3 py-1 text-[10px] font-black rounded ${reportMode === '6 Days' ? 'bg-[#2d808e] text-white' : 'text-gray-400 hover:bg-gray-50'}`}
             >
-              {years.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
+              6 DAYS
+            </button>
+          </div>
+
+          <div className="flex items-center bg-white rounded-lg border border-gray-100 p-1 shadow-sm">
+            {reportMode === 'Monthly' ? (
+              <>
+                <select 
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                  className="bg-transparent text-[11px] font-black uppercase px-3 py-1 outline-none border-r border-gray-100"
+                >
+                  {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
+                </select>
+                <select 
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                  className="bg-transparent text-[11px] font-black uppercase px-3 py-1 outline-none"
+                >
+                  {years.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </>
+            ) : (
+              <input 
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="bg-transparent text-[11px] font-black px-3 py-1 outline-none"
+              />
+            )}
           </div>
           
           <button 
@@ -444,7 +526,9 @@ const ReceiveReport: React.FC = () => {
               <BarChart3 size={18} />
             </div>
             <h2 className="text-sm font-black text-gray-800 uppercase tracking-tight">
-              ITEM RECEIVED SUMMARY OF {months[selectedMonth]}'{selectedYear}
+              {reportMode === 'Monthly' 
+                ? `ITEM RECEIVED SUMMARY OF ${months[selectedMonth]} '${selectedYear}`
+                : `ITEM RECEIVED SUMMARY (6 DAYS ENDING ${selectedDate})`}
             </h2>
           </div>
           <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase">
@@ -464,27 +548,27 @@ const ReceiveReport: React.FC = () => {
                 <thead>
                   <tr className="bg-gray-50 text-[10px] font-black text-gray-500 uppercase tracking-wider border-b border-gray-200">
                     <th className="px-4 py-3 border-r border-gray-200">DEPARTMENT</th>
-                    {allDepartments.map(dept => (
+                    {activeDepartments.map(dept => (
                       <th key={dept} className="px-4 py-3 text-center border-r border-gray-200">{dept}</th>
                     ))}
                     <th className="px-4 py-3 text-center">TOTAL</th>
                   </tr>
                 </thead>
                 <tbody className="text-[11px] font-bold text-gray-600">
-                  {['1st Week', '2nd Week', '3rd Week', '4th Week'].map(week => {
+                  {timeLabels.map(label => {
                     let rowTotal = 0;
                     return (
-                      <tr key={week} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-                        <td className="px-4 py-3 border-r border-gray-200 bg-gray-50/30">{week}</td>
-                        {allDepartments.map(dept => {
-                          const val = deptWiseData[week][dept] || 0;
+                      <tr key={label} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+                        <td className="px-4 py-3 border-r border-gray-200 bg-gray-50/30">{label}</td>
+                        {activeDepartments.map(dept => {
+                          const val = deptWiseData[label]?.[dept] || 0;
                           rowTotal += val;
                           return (
                             <td key={dept} className="px-1 py-1 text-center border-r border-gray-200">
                               <input 
                                 type="text"
                                 value={val === 0 ? '-' : val}
-                                onChange={(e) => handleDeptValueChange(week, dept, e.target.value)}
+                                onChange={(e) => handleDeptValueChange(label, dept, e.target.value)}
                                 className="w-full bg-transparent text-center outline-none focus:bg-blue-50 py-2"
                               />
                             </td>
@@ -496,12 +580,12 @@ const ReceiveReport: React.FC = () => {
                   })}
                   <tr className="bg-gray-50 font-black text-gray-800">
                     <td className="px-4 py-3 border-r border-gray-200">TOTAL</td>
-                    {allDepartments.map(dept => {
-                      const colTotal = ['1st Week', '2nd Week', '3rd Week', '4th Week'].reduce((acc, week) => acc + (deptWiseData[week][dept] || 0), 0);
+                    {activeDepartments.map(dept => {
+                      const colTotal = timeLabels.reduce((acc, label) => acc + (deptWiseData[label]?.[dept] || 0), 0);
                       return <td key={dept} className="px-4 py-3 text-center border-r border-gray-200">{colTotal || '-'}</td>;
                     })}
                     <td className="px-4 py-3 text-center text-[#2d808e]">
-                      {allDepartments.reduce((acc, dept) => acc + ['1st Week', '2nd Week', '3rd Week', '4th Week'].reduce((a, w) => a + (deptWiseData[w][dept] || 0), 0), 0)}
+                      {activeDepartments.reduce((acc, dept) => acc + timeLabels.reduce((a, l) => a + (deptWiseData[l]?.[dept] || 0), 0), 0)}
                     </td>
                   </tr>
                 </tbody>
@@ -526,20 +610,20 @@ const ReceiveReport: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="text-[11px] font-bold text-gray-600">
-                  {['1st Week', '2nd Week', '3rd Week', '4th Week'].map(week => {
+                  {timeLabels.map(label => {
                     let rowTotal = 0;
                     return (
-                      <tr key={week} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-                        <td className="px-4 py-3 border-r border-gray-200 bg-gray-50/30">{week}</td>
+                      <tr key={label} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+                        <td className="px-4 py-3 border-r border-gray-200 bg-gray-50/30">{label}</td>
                         {allItemTypes.map(type => {
-                          const val = typeWiseData[week][type] || 0;
+                          const val = typeWiseData[label]?.[type] || 0;
                           rowTotal += val;
                           return (
                             <td key={type} className="px-1 py-1 text-center border-r border-gray-200">
                               <input 
                                 type="text"
                                 value={val === 0 ? '-' : val}
-                                onChange={(e) => handleTypeValueChange(week, type, e.target.value)}
+                                onChange={(e) => handleTypeValueChange(label, type, e.target.value)}
                                 className="w-full bg-transparent text-center outline-none focus:bg-orange-50 py-2"
                               />
                             </td>
@@ -552,11 +636,11 @@ const ReceiveReport: React.FC = () => {
                   <tr className="bg-gray-50 font-black text-gray-800">
                     <td className="px-4 py-3 border-r border-gray-200">TOTAL</td>
                     {allItemTypes.map(type => {
-                      const colTotal = ['1st Week', '2nd Week', '3rd Week', '4th Week'].reduce((acc, week) => acc + (typeWiseData[week][type] || 0), 0);
+                      const colTotal = timeLabels.reduce((acc, label) => acc + (typeWiseData[label]?.[type] || 0), 0);
                       return <td key={type} className="px-4 py-3 text-center border-r border-gray-200">{colTotal || '-'}</td>;
                     })}
                     <td className="px-4 py-3 text-center text-[#f97316]">
-                      {allItemTypes.reduce((acc, type) => acc + ['1st Week', '2nd Week', '3rd Week', '4th Week'].reduce((a, w) => a + (typeWiseData[w][type] || 0), 0), 0)}
+                      {allItemTypes.reduce((acc, type) => acc + timeLabels.reduce((a, l) => a + (typeWiseData[l]?.[type] || 0), 0), 0)}
                     </td>
                   </tr>
                 </tbody>
@@ -574,7 +658,9 @@ const ReceiveReport: React.FC = () => {
               <PieChartIcon size={18} />
             </div>
             <h2 className="text-sm font-black text-gray-800 uppercase tracking-tight">
-              DEPT WISE ITEM RECEIVED - {months[selectedMonth]}'{selectedYear}
+              {reportMode === 'Monthly' 
+                ? `DEPT WISE ITEM RECEIVED - ${months[selectedMonth]} '${selectedYear}`
+                : `DEPT WISE ITEM RECEIVED (6 DAYS)`}
             </h2>
           </div>
         </div>
@@ -636,7 +722,7 @@ const ReceiveReport: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="text-[11px] font-bold text-gray-600">
-                    {allDepartments.map(dept => (
+                    {activeDepartments.map(dept => (
                       <tr key={dept} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
                         <td className="px-4 py-1 uppercase border-r border-gray-100 bg-gray-50/30">{dept}</td>
                         <td className="px-1 py-1 text-center border-r border-gray-100">
@@ -676,16 +762,16 @@ const ReceiveReport: React.FC = () => {
                     <tr className="bg-[#4472C4] font-black text-white">
                       <td className="px-4 py-2 uppercase border-r border-white/20">Grand Total</td>
                       <td className="px-4 py-2 text-center border-r border-white/20">
-                        {allDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.items || 0), 0)}
+                        {activeDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.items || 0), 0)}
                       </td>
                       <td className="px-4 py-2 text-center border-r border-white/20">
-                        {allDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.prQty || 0), 0)}
+                        {activeDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.prQty || 0), 0)}
                       </td>
                       <td className="px-4 py-2 text-center border-r border-white/20">
-                        {allDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.qty || 0), 0)}
+                        {activeDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.qty || 0), 0)}
                       </td>
                       <td className="px-4 py-2 text-right">
-                        {allDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.amt || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {activeDepartments.reduce((acc, d) => acc + (deptSummaryData[d]?.amt || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
                   </tbody>

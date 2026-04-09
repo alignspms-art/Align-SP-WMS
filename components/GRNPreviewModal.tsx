@@ -152,7 +152,7 @@ const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose }) => 
     if (!grnData) return;
     
     const wsData = [
-      ["Fair Technology Limited"],
+      ["Maheen Label Tex Ltd."],
       ["3rd Floor, House-# 76/B, Dhaka-1213"],
       ["Mobile:"],
       [],
@@ -263,7 +263,7 @@ const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose }) => 
           >
             {/* Header */}
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold mb-1">Fair Technology Limited.</h1>
+              <h1 className="text-3xl font-bold mb-1">Maheen Label Tex Ltd.</h1>
               <p className="text-sm font-bold">3rd Floor, House-# 76/B, Dhaka-1213</p>
               <p className="text-sm font-bold">Mobile:</p>
               <h2 className="text-2xl font-bold mt-6 underline underline-offset-4">Goods Received Note</h2>

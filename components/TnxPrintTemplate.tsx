@@ -26,7 +26,7 @@ const TnxPrintTemplate: React.FC<TnxPrintTemplateProps> = ({ tnx }) => {
       {/* Header */}
       <div className="flex justify-between items-start mb-8 relative">
         <div className="flex-1 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Fair Technology Limited</h1>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Maheen Label Tex Ltd.</h1>
           <p className="text-[11px] text-gray-600 mt-1 uppercase font-medium">Plot- 12/A & 12/B, Block-C, Kaliakoir Hi-Tech Park</p>
           <p className="text-[11px] text-gray-600 uppercase font-medium">Gazipur, Bangladesh-1750. +#880 1787-670 786</p>
           <h2 className="text-lg font-black mt-4 uppercase tracking-tighter">Transaction Details Report</h2>
