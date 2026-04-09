@@ -226,20 +226,20 @@ const ReportingIssueReceive: React.FC = () => {
       .sort((a, b) => (deptSummaryData[b].qty + deptSummaryData[b].rQty) - (deptSummaryData[a].qty + deptSummaryData[a].rQty));
 
     // Top Table
-    const tableHeader = [
-      [{ text: reportMode === 'Weekly' ? 'Days' : 'Week', options: { rowspan: 3, align: 'center', valign: 'middle', bold: true, border: { pt: 1, color: '000000' } } }],
+    const tableHeader: any[][] = [
+      [{ text: reportMode === 'Weekly' ? 'Days' : 'Week', options: { rowspan: 3, align: 'center' as const, valign: 'middle' as const, bold: true, border: { pt: 1, color: '000000' } } }],
       [],
       []
     ];
 
     activeDepts.forEach(dept => {
-      tableHeader[0].push({ text: dept, options: { colspan: 4, align: 'center', bold: true, border: { pt: 1, color: '000000' } } } as any);
-      tableHeader[1].push({ text: 'ISSUED', options: { colspan: 2, align: 'center', bold: true, border: { pt: 1, color: '000000' } } } as any);
-      tableHeader[1].push({ text: 'RECEIVED', options: { colspan: 2, align: 'center', bold: true, border: { pt: 1, color: '000000' } } } as any);
-      tableHeader[2].push({ text: 'QTY', options: { align: 'center', bold: true, border: { pt: 1, color: '000000' } } } as any);
-      tableHeader[2].push({ text: 'Amount', options: { align: 'center', bold: true, border: { pt: 1, color: '000000' } } } as any);
-      tableHeader[2].push({ text: 'QTY', options: { align: 'center', bold: true, border: { pt: 1, color: '000000' } } } as any);
-      tableHeader[2].push({ text: 'Amount', options: { align: 'center', bold: true, border: { pt: 1, color: '000000' } } } as any);
+      tableHeader[0].push({ text: dept, options: { colspan: 4, align: 'center' as const, bold: true, border: { pt: 1, color: '000000' } } });
+      tableHeader[1].push({ text: 'ISSUED', options: { colspan: 2, align: 'center' as const, bold: true, border: { pt: 1, color: '000000' } } });
+      tableHeader[1].push({ text: 'RECEIVED', options: { colspan: 2, align: 'center' as const, bold: true, border: { pt: 1, color: '000000' } } });
+      tableHeader[2].push({ text: 'QTY', options: { align: 'center' as const, bold: true, border: { pt: 1, color: '000000' } } });
+      tableHeader[2].push({ text: 'Amount', options: { align: 'center' as const, bold: true, border: { pt: 1, color: '000000' } } });
+      tableHeader[2].push({ text: 'QTY', options: { align: 'center' as const, bold: true, border: { pt: 1, color: '000000' } } });
+      tableHeader[2].push({ text: 'Amount', options: { align: 'center' as const, bold: true, border: { pt: 1, color: '000000' } } });
     });
 
     const tableRows: any[] = timeLabels.map(label => {
@@ -267,7 +267,7 @@ const ReportingIssueReceive: React.FC = () => {
     });
     tableRows.push(totalRow);
 
-    slide.addTable([...tableHeader, ...tableRows.map(r => r.map(c => ({ text: c, options: { align: 'center' as const, border: { pt: 1, color: '000000' } } })))], 
+    slide.addTable([...tableHeader, ...tableRows.map((r: string[]) => r.map((c: string) => ({ text: c, options: { align: 'center' as const, border: { pt: 1, color: '000000' } } })))], 
       { x: 0.5, y: 1.2, w: 12.3, fontSize: 8, border: { pt: 1, color: '000000' } }
     );
 
