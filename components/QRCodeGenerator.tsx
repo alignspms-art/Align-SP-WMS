@@ -140,11 +140,12 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
       return;
     }
 
-    printSection.innerHTML = '';
+    // printSection.innerHTML = ''; // REMOVED: Bypassing React root
     printSection.classList.add('printable');
     const root = getPrintRoot(printSection);
     root.render(
       <QRCodePrintView 
+        key={Date.now()}
         labels={labels} 
         settings={{ 
           showCode, 
@@ -203,7 +204,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
       alert("Failed to generate PDF");
     } finally {
       printSection.classList.remove('printable');
-      printSection.innerHTML = '';
+      const root = getPrintRoot(printSection);
+      root.render(null);
       setLoading(false);
     }
   };
@@ -211,11 +213,12 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
   const handlePrint = () => {
     const printSection = document.getElementById('print-section');
     if (!printSection) return;
-    printSection.innerHTML = '';
+    // printSection.innerHTML = ''; // REMOVED: Bypassing React root
     printSection.classList.add('printable');
     const root = getPrintRoot(printSection);
     root.render(
       <QRCodePrintView 
+        key={Date.now()}
         labels={labels} 
         settings={{ 
           showCode, 
@@ -236,7 +239,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
       // Cleanup after print dialog opens
       setTimeout(() => {
         printSection.classList.remove('printable');
-        printSection.innerHTML = '';
+        const root = getPrintRoot(printSection);
+        root.render(null);
       }, 1000);
     }, 1000);
   };
