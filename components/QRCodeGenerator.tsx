@@ -195,14 +195,18 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
               steps={[8, 16, 24, 32, 40, 48]}
               onChange={setVGutter}
             />
-            <CustomSlider 
-              label="Column Count" 
-              value={columnCount} 
-              min={1} 
-              max={12} 
-              steps={[1, 2, 3, 4, 6, 8, 12]}
-              onChange={setColumnCount}
-            />
+            <div className="flex flex-col space-y-3 flex-1 min-w-[150px]">
+              <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Column Count:</label>
+              <select 
+                value={columnCount} 
+                onChange={(e) => setColumnCount(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-[#2d808e] outline-none text-sm font-bold bg-gray-50/30 shadow-inner"
+              >
+                {[1, 2, 3, 4, 6, 8, 12].map(num => (
+                  <option key={num} value={num}>{num} Columns</option>
+                ))}
+              </select>
+            </div>
 
             <div className="grid grid-cols-2 gap-x-8 gap-y-4 min-w-[300px]">
               <div className="flex items-center space-x-3">
