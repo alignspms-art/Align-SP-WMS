@@ -1,14 +1,15 @@
 
 import React from 'react';
-import { CheckCircle, X } from 'lucide-react';
+import { CheckCircle, X, Tag } from 'lucide-react';
 
 interface GRNSuccessModalProps {
   grnId: string;
   items: any[];
   onClose: () => void;
+  onPrintLabels?: () => void;
 }
 
-const GRNSuccessModal: React.FC<GRNSuccessModalProps> = ({ grnId, items, onClose }) => {
+const GRNSuccessModal: React.FC<GRNSuccessModalProps> = ({ grnId, items, onClose, onPrintLabels }) => {
   return (
     <div className="fixed inset-0 bg-black/40 z-[200] flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-[450px] rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
@@ -47,12 +48,23 @@ const GRNSuccessModal: React.FC<GRNSuccessModalProps> = ({ grnId, items, onClose
             </div>
           </div>
 
-          <button 
-            onClick={onClose}
-            className="w-full mt-6 py-2.5 bg-[#2d808e] text-white text-[13px] font-bold rounded-lg hover:bg-[#256b78] transition-all shadow-md"
-          >
-            Done
-          </button>
+          <div className="flex gap-3 mt-6">
+            <button 
+              onClick={onClose}
+              className="flex-1 py-2.5 bg-gray-100 text-gray-600 text-[13px] font-bold rounded-lg hover:bg-gray-200 transition-all"
+            >
+              Done
+            </button>
+            {onPrintLabels && (
+              <button 
+                onClick={onPrintLabels}
+                className="flex-1 py-2.5 bg-[#2d808e] text-white text-[13px] font-bold rounded-lg hover:bg-[#256b78] transition-all shadow-md flex items-center justify-center gap-2"
+              >
+                <Tag size={16} />
+                Print Labels
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

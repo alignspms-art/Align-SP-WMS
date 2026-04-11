@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { X, Printer, FileText, Download, Loader2 } from 'lucide-react';
+import { X, Printer, FileText, Download, Loader2, Tag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -9,9 +9,10 @@ import html2canvas from 'html2canvas';
 interface GRNPreviewModalProps {
   grnId: string;
   onClose: () => void;
+  onPrintLabels?: (items: any[]) => void;
 }
 
-const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose }) => {
+const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose, onPrintLabels }) => {
   const [loading, setLoading] = useState(true);
   const [grnData, setGrnData] = useState<any>(null);
   const [poData, setPoData] = useState<any>(null);
@@ -131,6 +132,10 @@ const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose }) => 
       </html>
     `);
     printWindow.document.close();
+
+    if (onPrintLabels && grnData?.items) {
+      setTimeout(() => onPrintLabels(grnData.items), 500);
+    }
   };
 
   const handleDownloadPDF = async () => {
@@ -146,6 +151,10 @@ const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose }) => 
     
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
     pdf.save(`GRN_${grnId}.pdf`);
+
+    if (onPrintLabels && grnData?.items) {
+      onPrintLabels(grnData.items);
+    }
   };
 
   const handleExportExcel = () => {
@@ -182,6 +191,10 @@ const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose }) => 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "GRN");
     XLSX.writeFile(wb, `GRN_${grnId}.xlsx`);
+
+    if (onPrintLabels && grnData?.items) {
+      onPrintLabels(grnData.items);
+    }
   };
 
   if (loading) {
@@ -239,6 +252,16 @@ const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose }) => 
                 <Download size={18} />
                 <span className="text-xs font-bold">Excel</span>
               </button>
+              {onPrintLabels && (
+                <button 
+                  onClick={() => onPrintLabels(grnData.items)}
+                  className="p-2 hover:bg-white rounded-lg text-[#2d808e] hover:text-[#256b78] transition-all flex items-center space-x-1 border border-transparent hover:border-gray-200"
+                  title="Print Labels"
+                >
+                  <Tag size={18} />
+                  <span className="text-xs font-bold">Labels</span>
+                </button>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-3">
@@ -305,8 +328,8 @@ const GRNPreviewModal: React.FC<GRNPreviewModalProps> = ({ grnId, onClose }) => 
                     <td className="border border-black px-2 py-1">{item.sku}</td>
                     <td className="border border-black px-2 py-1">{item.name}</td>
                     <td className="border border-black px-2 py-1 text-center">{item.uom}</td>
-                    <td className="border border-black px-2 py-1 text-right">{(item.poQty || item.recQty || 0).toFixed(3)}</td>
-                    <td className="border border-black px-2 py-1 text-right">{(item.grnQty || item.recQty || 0).toFixed(3)}</td>
+                    <td className="border border-black px-2 py-1 text-right">{Number(item.poQty || item.recQty || 0).toFixed(3)}</td>
+                    <td className="border border-black px-2 py-1 text-right">{Number(item.grnQty || item.recQty || 0).toFixed(3)}</td>
                     <td className="border border-black px-2 py-1">{item.remarks || ''}</td>
                   </tr>
                 ))}

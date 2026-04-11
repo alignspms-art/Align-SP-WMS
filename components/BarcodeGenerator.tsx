@@ -8,6 +8,7 @@ import JsBarcode from 'https://esm.sh/jsbarcode';
 
 interface BarcodeGeneratorProps {
   onBack: () => void;
+  initialItems?: any[] | null;
 }
 
 const BarcodePrintView = ({ labels, settings }: any) => {
@@ -90,8 +91,16 @@ const CustomSlider = ({ label, value, min, max, steps, onChange }: any) => (
   </div>
 );
 
-const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({ onBack }) => {
-  const [skuInput, setSkuInput] = useState('');
+const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({ onBack, initialItems }) => {
+  const [skuInput, setSkuInput] = useState(() => {
+    if (initialItems && initialItems.length > 0) {
+      return initialItems.flatMap(item => {
+        const qty = Math.max(1, Math.floor(Number(item.grnQty || item.recQty || 1)));
+        return Array(qty).fill(item.sku);
+      }).join('\n');
+    }
+    return '';
+  });
   const [hGutter, setHGutter] = useState(16);
   const [vGutter, setVGutter] = useState(16);
   const [columnCount, setColumnCount] = useState(2); // Default to 2
@@ -130,6 +139,18 @@ const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({ onBack }) => {
       setLabels(skus.map(sku => ({ sku, name: 'Item not found' })));
     }
     setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (initialItems && initialItems.length > 0) {
+      const skusArray = initialItems.flatMap(item => {
+        const qty = Math.max(1, Math.floor(Number(item.grnQty || item.recQty || 1)));
+        return Array(qty).fill(item.sku);
+      });
+      fetchItems(skusArray);
+    }
+    // Only run on mount for initialItems
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

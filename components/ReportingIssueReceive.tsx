@@ -247,9 +247,9 @@ const ReportingIssueReceive: React.FC = () => {
       activeDepts.forEach(dept => {
         const d = combinedData[label]?.[dept] || { iQty: 0, iAmt: 0, rQty: 0, rAmt: 0 };
         row.push(d.iQty === 0 ? '-' : d.iQty.toString());
-        row.push(d.iAmt === 0 ? '-' : d.iAmt.toFixed(0));
+        row.push(d.iAmt === 0 ? '-' : Number(d.iAmt).toFixed(0));
         row.push(d.rQty === 0 ? '-' : d.rQty.toString());
-        row.push(d.rAmt === 0 ? '-' : d.rAmt.toFixed(0));
+        row.push(d.rAmt === 0 ? '-' : Number(d.rAmt).toFixed(0));
       });
       return row;
     });
@@ -261,9 +261,9 @@ const ReportingIssueReceive: React.FC = () => {
       const totalRQty = timeLabels.reduce((acc, l) => acc + (combinedData[l]?.[dept]?.rQty || 0), 0);
       const totalRAmt = timeLabels.reduce((acc, l) => acc + (combinedData[l]?.[dept]?.rAmt || 0), 0);
       totalRow.push(totalIQty.toString());
-      totalRow.push(totalIAmt.toFixed(0));
+      totalRow.push(Number(totalIAmt).toFixed(0));
       totalRow.push(totalRQty.toString());
-      totalRow.push(totalRAmt.toFixed(0));
+      totalRow.push(Number(totalRAmt).toFixed(0));
     });
     tableRows.push(totalRow);
 
@@ -318,17 +318,17 @@ const ReportingIssueReceive: React.FC = () => {
       d,
       deptSummaryData[d].items.toString(),
       deptSummaryData[d].qty.toString(),
-      deptSummaryData[d].amt.toFixed(2),
+      Number(deptSummaryData[d].amt).toFixed(2),
       deptSummaryData[d].rQty.toString(),
-      deptSummaryData[d].rAmt.toFixed(2)
+      Number(deptSummaryData[d].rAmt).toFixed(2)
     ]);
     const summaryTotal = [
       'Grand Total',
       activeDepts.reduce((acc, d) => acc + deptSummaryData[d].items, 0).toString(),
       activeDepts.reduce((acc, d) => acc + deptSummaryData[d].qty, 0).toString(),
-      activeDepts.reduce((acc, d) => acc + deptSummaryData[d].amt, 0).toFixed(2),
+      Number(activeDepts.reduce((acc, d) => acc + deptSummaryData[d].amt, 0)).toFixed(2),
       activeDepts.reduce((acc, d) => acc + deptSummaryData[d].rQty, 0).toString(),
-      activeDepts.reduce((acc, d) => acc + deptSummaryData[d].rAmt, 0).toFixed(2)
+      Number(activeDepts.reduce((acc, d) => acc + deptSummaryData[d].rAmt, 0)).toFixed(2)
     ];
     summaryRows.push(summaryTotal);
 
@@ -544,9 +544,9 @@ const ReportingIssueReceive: React.FC = () => {
                       return (
                         <React.Fragment key={`${label}-${dept}`}>
                           <td className="border border-gray-300 py-2">{d.iQty || '-'}</td>
-                          <td className="border border-gray-300 py-2">{d.iAmt ? d.iAmt.toFixed(0) : '-'}</td>
+                          <td className="border border-gray-300 py-2">{d.iAmt ? Number(d.iAmt).toFixed(0) : '-'}</td>
                           <td className="border border-gray-300 py-2">{d.rQty || '-'}</td>
-                          <td className="border border-gray-300 py-2">{d.rAmt ? d.rAmt.toFixed(0) : '-'}</td>
+                          <td className="border border-gray-300 py-2">{d.rAmt ? Number(d.rAmt).toFixed(0) : '-'}</td>
                         </React.Fragment>
                       );
                     })}
@@ -562,9 +562,9 @@ const ReportingIssueReceive: React.FC = () => {
                     return (
                       <React.Fragment key={`${dept}-total`}>
                         <td className="border border-gray-300 py-2">{totalIQty || '-'}</td>
-                        <td className="border border-gray-300 py-2">{totalIAmt ? totalIAmt.toFixed(0) : '-'}</td>
+                        <td className="border border-gray-300 py-2">{totalIAmt ? Number(totalIAmt).toFixed(0) : '-'}</td>
                         <td className="border border-gray-300 py-2">{totalRQty || '-'}</td>
-                        <td className="border border-gray-300 py-2">{totalRAmt ? totalRAmt.toFixed(0) : '-'}</td>
+                        <td className="border border-gray-300 py-2">{totalRAmt ? Number(totalRAmt).toFixed(0) : '-'}</td>
                       </React.Fragment>
                     );
                   })}
@@ -616,18 +616,18 @@ const ReportingIssueReceive: React.FC = () => {
                       <td className="px-3 py-2 uppercase border-r border-gray-100">{d}</td>
                       <td className="px-3 py-2 text-center border-r border-gray-100">{deptSummaryData[d].items}</td>
                       <td className="px-3 py-2 text-center border-r border-gray-100">{deptSummaryData[d].qty}</td>
-                      <td className="px-3 py-2 text-center border-r border-gray-100">{deptSummaryData[d].amt.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-center border-r border-gray-100">{Number(deptSummaryData[d].amt).toFixed(2)}</td>
                       <td className="px-3 py-2 text-center border-r border-gray-100">{deptSummaryData[d].rQty}</td>
-                      <td className="px-3 py-2 text-right">{deptSummaryData[d].rAmt.toFixed(2)}</td>
+                      <td className="px-3 py-2 text-right">{Number(deptSummaryData[d].rAmt).toFixed(2)}</td>
                     </tr>
                   ))}
                   <tr className="bg-[#4472C4] text-white font-black">
                     <td className="px-3 py-2 uppercase border-r border-white/20">Grand Total</td>
                     <td className="px-3 py-2 text-center border-r border-white/20">{activeDepts.reduce((acc, d) => acc + deptSummaryData[d].items, 0)}</td>
                     <td className="px-3 py-2 text-center border-r border-white/20">{activeDepts.reduce((acc, d) => acc + deptSummaryData[d].qty, 0)}</td>
-                    <td className="px-3 py-2 text-center border-r border-white/20">{activeDepts.reduce((acc, d) => acc + deptSummaryData[d].amt, 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 text-center border-r border-white/20">{Number(activeDepts.reduce((acc, d) => acc + deptSummaryData[d].amt, 0)).toFixed(2)}</td>
                     <td className="px-3 py-2 text-center border-r border-white/20">{activeDepts.reduce((acc, d) => acc + deptSummaryData[d].rQty, 0)}</td>
-                    <td className="px-3 py-2 text-right">{activeDepts.reduce((acc, d) => acc + deptSummaryData[d].rAmt, 0).toFixed(2)}</td>
+                    <td className="px-3 py-2 text-right">{Number(activeDepts.reduce((acc, d) => acc + deptSummaryData[d].rAmt, 0)).toFixed(2)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -644,7 +644,7 @@ const ReportingIssueReceive: React.FC = () => {
                       cy="50%"
                       outerRadius={60}
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name} ${Number(percent * 100).toFixed(0)}%`}
                     >
                       {pieDataIssued.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -664,7 +664,7 @@ const ReportingIssueReceive: React.FC = () => {
                       cy="50%"
                       outerRadius={60}
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name} ${Number(percent * 100).toFixed(0)}%`}
                     >
                       {pieDataReceived.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

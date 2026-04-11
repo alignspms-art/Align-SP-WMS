@@ -94,7 +94,7 @@ const MOPrintTemplate: React.FC<MOPrintTemplateProps> = ({ mo }) => {
                 <td className="border border-black py-1 px-1 text-right">{formatCurrency(price)}</td>
                 <td className="border border-black py-1 px-1">{Number(item.onHand || 0).toFixed(2)}</td>
                 <td className="border border-black py-1 px-1">{Number(item.reqQty || 0).toFixed(2)}</td>
-                <td className="border border-black py-1 px-1 font-bold">{tnxQty.toFixed(2)}</td>
+                <td className="border border-black py-1 px-1 font-bold">{Number(tnxQty).toFixed(2)}</td>
                 <td className="border border-black py-1 px-1 text-right">{formatCurrency(tnxQty * price)}</td>
                 <td className="border border-black py-1 px-1">{Number(item.used1m || 0).toFixed(2)}</td>
                 <td className="border border-black py-1 px-1">{Number(item.used6m || 0).toFixed(2)}</td>
@@ -105,8 +105,8 @@ const MOPrintTemplate: React.FC<MOPrintTemplateProps> = ({ mo }) => {
           {/* Total Row */}
           <tr className="font-black text-right bg-gray-50/30">
             <td colSpan={7} className="border border-black py-1.5 px-2 uppercase tracking-tighter">Total=</td>
-            <td className="border border-black py-1.5 px-1 text-center">{totalReqQty.toFixed(2)}</td>
-            <td className="border border-black py-1.5 px-1 text-center">{totalTnxQty.toFixed(2)}</td>
+            <td className="border border-black py-1.5 px-1 text-center">{Number(totalReqQty).toFixed(2)}</td>
+            <td className="border border-black py-1.5 px-1 text-center">{Number(totalTnxQty).toFixed(2)}</td>
             <td className="border border-black py-1.5 px-1 text-right text-[#2d808e]">{formatCurrency(totalTnxValue)}</td>
             <td colSpan={3} className="border border-black"></td>
           </tr>

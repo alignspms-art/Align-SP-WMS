@@ -139,7 +139,7 @@ const ABCAnalysis: React.FC = () => {
         'Avg Price': item.avg_price,
         'Total Value': item.total_value,
       } : {}),
-      'Cumulative %': item.cumulative_percentage.toFixed(2) + '%'
+      'Cumulative %': Number(item.cumulative_percentage).toFixed(2) + '%'
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -217,7 +217,7 @@ const ABCAnalysis: React.FC = () => {
                   {analysisType === 'COST' ? 'BDT ' : ''}{stats.A.value.toLocaleString()}
                 </p>
               </div>
-              <p className="text-[11px] font-black text-emerald-600">{stats.A.percent.toFixed(1)}%</p>
+              <p className="text-[11px] font-black text-emerald-600">{Number(stats.A.percent).toFixed(1)}%</p>
             </div>
           </div>
         </div>
@@ -240,7 +240,7 @@ const ABCAnalysis: React.FC = () => {
                   {analysisType === 'COST' ? 'BDT ' : ''}{stats.B.value.toLocaleString()}
                 </p>
               </div>
-              <p className="text-[11px] font-black text-amber-600">{stats.B.percent.toFixed(1)}%</p>
+              <p className="text-[11px] font-black text-amber-600">{Number(stats.B.percent).toFixed(1)}%</p>
             </div>
           </div>
         </div>
@@ -263,7 +263,7 @@ const ABCAnalysis: React.FC = () => {
                   {analysisType === 'COST' ? 'BDT ' : ''}{stats.C.value.toLocaleString()}
                 </p>
               </div>
-              <p className="text-[11px] font-black text-gray-600">{stats.C.percent.toFixed(1)}%</p>
+              <p className="text-[11px] font-black text-gray-600">{Number(stats.C.percent).toFixed(1)}%</p>
             </div>
           </div>
         </div>
@@ -368,7 +368,7 @@ const ABCAnalysis: React.FC = () => {
                     )}
                     <td className="px-6 py-4 border-b border-gray-50 text-right">
                       <div className="flex flex-col items-end">
-                        <span className="text-[10px] font-black text-gray-400">{item.cumulative_percentage.toFixed(1)}%</span>
+                        <span className="text-[10px] font-black text-gray-400">{Number(item.cumulative_percentage).toFixed(1)}%</span>
                         <div className="w-16 h-1 bg-gray-100 rounded-full mt-1 overflow-hidden">
                           <div 
                             className={`h-full rounded-full ${

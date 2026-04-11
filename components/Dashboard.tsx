@@ -381,7 +381,7 @@ const DashboardOverview: React.FC<{
       list?.filter(entry => new Date(entry.created_at) >= dateLimit).forEach(entry => {
         count++; (entry.items || []).forEach((item: any) => qty += Number(item.poQty || item.reqQty || 0));
       });
-      return { qty: qty > 1000 ? (qty/1000).toFixed(1) + 'K' : qty.toString(), count: count.toString() };
+      return { qty: qty > 1000 ? Number(qty/1000).toFixed(1) + 'K' : qty.toString(), count: count.toString() };
     };
 
     const combinedOrders = [...(allPo || []), ...(moveOrders || [])];
@@ -529,7 +529,7 @@ const DashboardOverview: React.FC<{
                     <LabelList dataKey="qty" position="top" offset={22} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e293b' }} />
                   </Bar>
                   <Line yAxisId="right" type="monotone" dataKey="value" stroke="#f97316" strokeWidth={2} dot={{ fill: '#f97316', r: 4 }}>
-                    <LabelList dataKey="value" position="top" offset={8} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f97316' }} formatter={(val: number) => val > 1000 ? (val/1000).toFixed(1) + 'K' : val.toFixed(0)} />
+                    <LabelList dataKey="value" position="top" offset={8} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f97316' }} formatter={(val: number) => val > 1000 ? Number(val/1000).toFixed(1) + 'K' : Number(val).toFixed(0)} />
                   </Line>
                 </ComposedChart>
               </ResponsiveContainer>
@@ -558,7 +558,7 @@ const DashboardOverview: React.FC<{
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} domain={[0, (max: number) => Math.ceil(max * 1.2)]} />
                   <Tooltip contentStyle={{ fontSize: '12px', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
                   <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} dot={{ fill: '#3b82f6', r: 6, strokeWidth: 2, stroke: '#fff' }}>
-                    <LabelList dataKey="value" position="top" offset={12} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#3b82f6' }} formatter={(val: number) => val > 1000 ? (val/1000).toFixed(1) + 'K' : val.toFixed(0)} />
+                    <LabelList dataKey="value" position="top" offset={12} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#3b82f6' }} formatter={(val: number) => val > 1000 ? Number(val/1000).toFixed(1) + 'K' : Number(val).toFixed(0)} />
                   </Line>
                 </LineChart>
               </ResponsiveContainer>
@@ -590,7 +590,7 @@ const DashboardOverview: React.FC<{
                     <LabelList dataKey="qty" position="top" offset={22} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e293b' }} />
                   </Bar>
                   <Line yAxisId="right" type="monotone" dataKey="value" stroke="#f97316" strokeWidth={2} dot={{ fill: '#f97316', r: 4 }}>
-                    <LabelList dataKey="value" position="top" offset={8} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f97316' }} formatter={(val: number) => val > 1000 ? (val/1000).toFixed(1) + 'K' : val.toFixed(0)} />
+                    <LabelList dataKey="value" position="top" offset={8} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f97316' }} formatter={(val: number) => val > 1000 ? Number(val/1000).toFixed(1) + 'K' : Number(val).toFixed(0)} />
                   </Line>
                 </ComposedChart>
               </ResponsiveContainer>
@@ -619,7 +619,7 @@ const DashboardOverview: React.FC<{
                     <LabelList dataKey="qty" position="top" offset={22} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#1e293b' }} />
                   </Bar>
                   <Line yAxisId="right" type="monotone" dataKey="value" stroke="#f97316" strokeWidth={2} dot={{ fill: '#f97316', r: 4 }}>
-                    <LabelList dataKey="value" position="top" offset={8} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f97316' }} formatter={(val: number) => val > 1000 ? (val/1000).toFixed(1) + 'K' : val.toFixed(0)} />
+                    <LabelList dataKey="value" position="top" offset={8} style={{ fontSize: '10px', fontWeight: 'bold', fill: '#f97316' }} formatter={(val: number) => val > 1000 ? Number(val/1000).toFixed(1) + 'K' : Number(val).toFixed(0)} />
                   </Line>
                 </ComposedChart>
               </ResponsiveContainer>
@@ -648,7 +648,7 @@ const DashboardOverview: React.FC<{
               <div className="w-1/2 flex flex-col space-y-2 overflow-y-auto max-h-[160px] scrollbar-thin pr-2">
                 {stockTypes.map((type, index) => { 
                   const total = stockTypes.reduce((acc, curr) => acc + curr.value, 0); 
-                  const percent = total > 0 ? ((type.value / total) * 100).toFixed(0) : 0; 
+                  const percent = total > 0 ? Number((type.value / total) * 100).toFixed(0) : 0; 
                   return (
                     <div key={index} className="flex items-center justify-between group hover:bg-gray-50 p-2 rounded-lg transition-colors">
                       <div className="flex items-center space-x-2 overflow-hidden">
@@ -1559,7 +1559,16 @@ const Dashboard: React.FC = () => {
         </div>
       )}
       {previewTnx && <TnxDetailsModal tnx={previewTnx} onClose={() => setPreviewTnx(null)} />}
-      {previewGrn && <GRNPreviewModal grnId={previewGrn} onClose={() => setPreviewGrn(null)} />}
+      {previewGrn && (
+        <GRNPreviewModal 
+          grnId={previewGrn} 
+          onClose={() => setPreviewGrn(null)} 
+          onPrintLabels={(items) => {
+            setPreviewGrn(null);
+            navigate('/label', { state: { items } });
+          }}
+        />
+      )}
       <ProfileModal user={user} isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} logout={logout} />
     </div>
   );

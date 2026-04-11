@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Loader2, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import GRNPreviewModal from './GRNPreviewModal';
 
@@ -30,6 +31,7 @@ interface MakeGRNFormProps {
 }
 
 const MakeGRNForm: React.FC<MakeGRNFormProps> = ({ selectedItems, onClose, onSubmit }) => {
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [items, setItems] = useState<GRNItem[]>([]);
   const [allLocations, setAllLocations] = useState<{name: string, count: number}[]>([]);
@@ -235,7 +237,16 @@ const MakeGRNForm: React.FC<MakeGRNFormProps> = ({ selectedItems, onClose, onSub
   };
 
   if (showSuccess) {
-    return <GRNPreviewModal grnId={grnId} onClose={onSubmit} />;
+    return (
+      <GRNPreviewModal 
+        grnId={grnId} 
+        onClose={onSubmit} 
+        onPrintLabels={(items) => {
+          onSubmit();
+          navigate('/label', { state: { items } });
+        }}
+      />
+    );
   }
 
   return (

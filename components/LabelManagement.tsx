@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Home, ScanBarcode, QrCode } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import BarcodeGenerator from './BarcodeGenerator';
 import QRCodeGenerator from './QRCodeGenerator';
 
@@ -27,10 +28,14 @@ const LabelCard: React.FC<{
 );
 
 const LabelManagement: React.FC = () => {
-  const [view, setView] = useState<'hub' | 'barcode' | 'qr'>('hub');
+  const location = useLocation();
+  const [view, setView] = useState<'hub' | 'barcode' | 'qr'>(
+    location.state && location.state.items ? 'barcode' : 'hub'
+  );
+  const initialItems = location.state && location.state.items ? location.state.items : null;
 
   if (view === 'barcode') {
-    return <BarcodeGenerator onBack={() => setView('hub')} />;
+    return <BarcodeGenerator onBack={() => setView('hub')} initialItems={initialItems} />;
   }
 
   if (view === 'qr') {

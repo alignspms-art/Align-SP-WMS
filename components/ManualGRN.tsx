@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Home, Plus, MinusCircle, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import GRNPreviewModal from './GRNPreviewModal';
 import ItemSearchInput from './ItemSearchInput';
@@ -25,6 +26,7 @@ interface ManualGRNProps {
 }
 
 const ManualGRN: React.FC<ManualGRNProps> = ({ onBack, onSubmit }) => {
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [allLocations, setAllLocations] = useState<{name: string, count: number}[]>([]);
   const [allDepartments, setAllDepartments] = useState<string[]>([]);
@@ -181,7 +183,16 @@ const ManualGRN: React.FC<ManualGRNProps> = ({ onBack, onSubmit }) => {
   };
 
   if (showSuccess) {
-    return <GRNPreviewModal grnId={grnId} onClose={() => onSubmit({ ...formData, items })} />;
+    return (
+      <GRNPreviewModal 
+        grnId={grnId} 
+        onClose={() => onSubmit({ ...formData, items })} 
+        onPrintLabels={(items) => {
+          onSubmit({ ...formData, items });
+          navigate('/label', { state: { items } });
+        }}
+      />
+    );
   }
 
   return (

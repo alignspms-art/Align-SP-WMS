@@ -357,9 +357,9 @@ const PurchaseReport: React.FC = () => {
                     <td className="px-4 py-3">{row.sku}</td>
                     <td className="px-4 py-3 font-black uppercase text-gray-800">{row.name}</td>
                     <td className="px-4 py-3 text-center">{row.uom}</td>
-                    <td className="px-4 py-3 text-right">{row.unitPrice.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right">{Number(row.unitPrice).toFixed(2)}</td>
                     <td className="px-4 py-3 text-center font-bold">{row.qty}</td>
-                    <td className="px-4 py-3 text-right font-black text-gray-900">{row.tnxValue.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-black text-gray-900">{Number(row.tnxValue).toFixed(2)}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={`px-2 py-0.5 rounded text-[9px] font-black border ${
                         row.status === 'Approved' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-orange-50 text-orange-600 border-orange-100'
