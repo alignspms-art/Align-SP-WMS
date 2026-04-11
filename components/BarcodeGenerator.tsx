@@ -49,7 +49,15 @@ const BarcodePrintView = ({ labels, settings }: any) => {
           style={{ minHeight: '120px' }}
         >
           {settings.showName && (
-            <div className="w-full text-center mb-2 font-black uppercase truncate" style={{ fontSize: `${settings.nameFontSize}px` }}>
+            <div 
+              className="w-full text-center mb-2 font-black uppercase truncate" 
+              style={{ 
+                fontSize: `${settings.nameFontSize}px`,
+                lineHeight: '1.5',
+                paddingTop: '4px',
+                paddingBottom: '2px'
+              }}
+            >
               {label.name}
             </div>
           )}
@@ -223,10 +231,12 @@ const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({ onBack, initialItem
       if (!element) throw new Error("Print element not found");
 
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
+        scrollX: 0,
+        scrollY: 0,
         windowWidth: element.scrollWidth,
         windowHeight: element.scrollHeight
       });
