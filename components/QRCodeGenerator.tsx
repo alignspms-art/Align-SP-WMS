@@ -1,8 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, Printer, Loader2 } from 'lucide-react';
+import { Home, Printer, Loader2, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getPrintRoot } from '../lib/printRoot';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface QRCodeGeneratorProps {
   onBack: () => void;
@@ -13,16 +15,17 @@ const QRCodePrintView = ({ labels, settings }: any) => {
     <div 
       className="grid p-4 bg-white printable" 
       style={{ 
-        width: '100%',
+        width: settings.pageWidth ? `${settings.pageWidth}mm` : '210mm',
         gridTemplateColumns: `repeat(${settings.columnCount || 2}, minmax(0, 1fr))`,
         gap: `${settings.vGutter}px ${settings.hGutter}px`,
-        display: 'grid'
+        display: 'grid',
+        margin: '0 auto'
       }}
     >
       {labels.map((label: any, idx: number) => (
         <div 
           key={`${label.sku}-${idx}`}
-          className="border border-gray-300 p-4 flex flex-col items-center justify-center break-inside-avoid mb-4 text-center"
+          className="border border-gray-300 p-4 flex flex-col items-center justify-center break-inside-avoid text-center"
           style={{ minHeight: '150px' }}
         >
           {settings.showName && (
@@ -127,6 +130,84 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
     }
   }, [skuInput, fetchItems]);
 
+  const handleDownloadPDF = async () => {
+    if (labels.length === 0) return;
+    setLoading(true);
+    
+    const printSection = document.getElementById('print-section');
+    if (!printSection) {
+      setLoading(false);
+      return;
+    }
+
+    printSection.innerHTML = '';
+    printSection.classList.add('printable');
+    const root = getPrintRoot(printSection);
+    root.render(
+      <QRCodePrintView 
+        labels={labels} 
+        settings={{ 
+          showCode, 
+          codeFontSize, 
+          showName, 
+          nameFontSize, 
+          qrSize, 
+          columnCount,
+          hGutter,
+          vGutter,
+          pageWidth
+        }} 
+      />
+    );
+
+    // Give time for images to load from external API
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    try {
+      const element = printSection.firstChild as HTMLElement;
+      if (!element) throw new Error("Print element not found");
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      // Handle multi-page if needed
+      let heightLeft = pdfHeight;
+      let position = 0;
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`qrcodes-${new Date().getTime()}.pdf`);
+    } catch (err) {
+      console.error("PDF generation error:", err);
+      alert("Failed to generate PDF");
+    } finally {
+      printSection.classList.remove('printable');
+      printSection.innerHTML = '';
+      setLoading(false);
+    }
+  };
+
   const handlePrint = () => {
     const printSection = document.getElementById('print-section');
     if (!printSection) return;
@@ -144,7 +225,8 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
           qrSize, 
           columnCount,
           hGutter,
-          vGutter
+          vGutter,
+          pageWidth
         }} 
       />
     );
@@ -231,10 +313,19 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
                 <span className="text-[10px] font-bold text-gray-500 uppercase">Page Width mm</span>
                 <input type="number" value={pageWidth} onChange={e => setPageWidth(Number(e.target.value))} className="w-16 px-2 py-0.5 border border-gray-200 rounded text-xs font-bold" />
               </div>
-              <div className="col-span-2 flex items-center justify-end mt-2">
+              <div className="col-span-2 flex items-center justify-end mt-2 space-x-2">
+                <button 
+                  onClick={handleDownloadPDF}
+                  disabled={loading || labels.length === 0}
+                  className="bg-white text-[#2d808e] border-2 border-[#2d808e] px-4 py-2 rounded-lg text-sm font-black flex items-center space-x-2 hover:bg-gray-50 shadow-sm transition-all uppercase tracking-widest active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Download size={16} />
+                  <span>PDF</span>
+                </button>
                 <button 
                   onClick={handlePrint}
-                  className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-sm font-black flex items-center space-x-2 hover:bg-[#256b78] shadow-md transition-all uppercase tracking-widest active:scale-95"
+                  disabled={loading || labels.length === 0}
+                  className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-sm font-black flex items-center space-x-2 hover:bg-[#256b78] shadow-md transition-all uppercase tracking-widest active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Printer size={16} />
                   <span>Print QR</span>
