@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { createRoot } from 'react-dom/client';
 import { 
   Home, 
   FileSpreadsheet, 
@@ -17,6 +16,7 @@ import POPrintTemplate from './POPrintTemplate';
 import POPreviewModal from './POPreviewModal';
 import { supabase } from '../lib/supabase';
 import ColumnFilter from './ColumnFilter';
+import { getPrintRoot } from '../lib/printRoot';
 
 const PurchaseOrder: React.FC = () => {
   const [view, setView] = useState<'list' | 'select-items' | 'create-details'>('list');
@@ -71,7 +71,7 @@ const PurchaseOrder: React.FC = () => {
     const printSection = document.getElementById('print-section');
     if (!printSection) return;
     printSection.innerHTML = '';
-    const root = createRoot(printSection);
+    const root = getPrintRoot(printSection);
     root.render(<POPrintTemplate po={po} />);
     setTimeout(() => window.print(), 600);
   };

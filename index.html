@@ -88,7 +88,7 @@
 
         /* Ensure the printable area takes full width and is visible */
         .printable {
-          display: block !important;
+          display: block;
           visibility: visible !important;
           width: 100% !important;
           max-width: none !important;
@@ -103,7 +103,7 @@
 
         /* Specifically for the print-section used by label generators */
         #print-section.printable {
-          display: block !important;
+          display: block;
           visibility: visible !important;
           position: absolute !important;
           top: 0 !important;
@@ -179,7 +179,7 @@
 </head>
   <body>
     <div id="root"></div>
-    <div id="print-section" class="hidden print:block"></div>
+    <div id="print-section"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

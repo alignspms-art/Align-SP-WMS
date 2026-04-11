@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { createRoot } from 'react-dom/client';
 import { Home, Printer, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { getPrintRoot } from '../lib/printRoot';
 
 interface QRCodeGeneratorProps {
   onBack: () => void;
@@ -11,10 +11,11 @@ interface QRCodeGeneratorProps {
 const QRCodePrintView = ({ labels, settings }: any) => {
   return (
     <div 
-      className="grid gap-4 p-4 bg-white printable" 
+      className="grid p-4 bg-white printable" 
       style={{ 
         width: '100%',
         gridTemplateColumns: `repeat(${settings.columnCount || 2}, minmax(0, 1fr))`,
+        gap: `${settings.vGutter}px ${settings.hGutter}px`,
         display: 'grid'
       }}
     >
@@ -131,11 +132,20 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
     if (!printSection) return;
     printSection.innerHTML = '';
     printSection.classList.add('printable');
-    const root = createRoot(printSection);
+    const root = getPrintRoot(printSection);
     root.render(
       <QRCodePrintView 
         labels={labels} 
-        settings={{ showCode, codeFontSize, showName, nameFontSize, qrSize, columnCount }} 
+        settings={{ 
+          showCode, 
+          codeFontSize, 
+          showName, 
+          nameFontSize, 
+          qrSize, 
+          columnCount,
+          hGutter,
+          vGutter
+        }} 
       />
     );
     // Give time for images to load from external API
