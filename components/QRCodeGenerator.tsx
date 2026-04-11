@@ -29,7 +29,15 @@ const QRCodePrintView = ({ labels, settings }: any) => {
           style={{ minHeight: '150px' }}
         >
           {settings.showName && (
-            <div className="w-full font-black uppercase truncate mb-2" style={{ fontSize: `${settings.nameFontSize}px` }}>
+            <div 
+              className="w-full font-black uppercase truncate mb-2" 
+              style={{ 
+                fontSize: `${settings.nameFontSize}px`,
+                lineHeight: '1.5',
+                paddingTop: '4px',
+                paddingBottom: '2px'
+              }}
+            >
               {label.name}
             </div>
           )}
@@ -169,10 +177,12 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onBack }) => {
       if (!element) throw new Error("Print element not found");
 
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
+        scrollX: 0,
+        scrollY: 0,
         windowWidth: element.scrollWidth,
         windowHeight: element.scrollHeight
       });
