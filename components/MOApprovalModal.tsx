@@ -8,6 +8,7 @@ import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
 import IssueSlipPrintTemplate from './IssueSlipPrintTemplate';
 import ScannerModal from './ScannerModal';
+import { getPrintRoot } from '../lib/printRoot';
 
 interface MOApprovalModalProps {
   mo: any;
@@ -143,7 +144,23 @@ const MOApprovalModal: React.FC<MOApprovalModalProps> = ({ mo, isOpen, onClose }
   };
 
   const handlePrint = () => {
-    window.print();
+    const printSection = document.getElementById('print-section');
+    if (!printSection) {
+      window.print();
+      return;
+    }
+
+    printSection.classList.add('printable');
+    const root = getPrintRoot(printSection);
+    root.render(<IssueSlipPrintTemplate mo={{ ...mo, items }} />);
+
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        printSection.classList.remove('printable');
+        root.render(null);
+      }, 1000);
+    }, 500);
   };
 
   const handleDownloadPDF = async () => {
