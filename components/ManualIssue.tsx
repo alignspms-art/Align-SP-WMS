@@ -1,12 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { Home, Trash2, Loader2, Save, Plus, CheckCircle2, ScanLine, X, Printer, ChevronDown } from 'lucide-react';
+import { Home, Trash2, Loader2, Save, Plus, CheckCircle2, ScanLine, X, Printer, ChevronDown, FileDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { getPrintRoot } from '../lib/printRoot';
 import ItemSearchInput from './ItemSearchInput';
 import ScannerModal from './ScannerModal';
 import IssueSlipPrintTemplate from './IssueSlipPrintTemplate';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface IssueItem {
   id: string;
@@ -68,6 +70,36 @@ const ManualIssue: React.FC<ManualIssueProps> = ({ onBack, onSubmit }) => {
         root.render(null);
       }, 1000);
     }, 500);
+  };
+
+  const handleDownloadPDF = async (mo: any) => {
+    const printSection = document.getElementById('print-section');
+    if (!printSection) return;
+
+    printSection.classList.add('printable');
+    const root = getPrintRoot(printSection);
+    root.render(<IssueSlipPrintTemplate mo={mo} />);
+
+    try {
+      // Wait for render
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const canvas = await html2canvas(printSection, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Issue_Slip_${mo.reference || mo.mo_no}.pdf`);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Failed to generate PDF. Please try printing instead.");
+    } finally {
+      printSection.classList.remove('printable');
+      root.render(null);
+    }
   };
 
   useEffect(() => {
@@ -340,6 +372,26 @@ const ManualIssue: React.FC<ManualIssueProps> = ({ onBack, onSubmit }) => {
               </div>
               <div className="flex items-center space-x-3">
                 <button 
+                  onClick={() => handleDownloadPDF({
+                    mo_no: showSuccess,
+                    reference: formData.tnxNo,
+                    header_text: formData.purpose,
+                    department: formData.department,
+                    employee_name: formData.employeeName,
+                    employee_id: formData.employeeId,
+                    section: formData.section,
+                    sub_section: formData.subSection,
+                    shift: formData.shift,
+                    items: items.map(i => ({ ...i, reqQty: i.issueQty, issuedQty: i.issueQty })),
+                    note: formData.note,
+                    created_at: new Date().toISOString()
+                  })}
+                  className="bg-red-500 text-white px-6 py-2 rounded-lg text-xs font-black hover:bg-red-600 flex items-center space-x-3 uppercase tracking-widest transition-all shadow-lg shadow-red-900/20"
+                >
+                  <FileDown size={18} />
+                  <span>Download PDF</span>
+                </button>
+                <button 
                   onClick={() => handlePrint({
                     mo_no: showSuccess,
                     reference: formData.tnxNo,
@@ -354,7 +406,7 @@ const ManualIssue: React.FC<ManualIssueProps> = ({ onBack, onSubmit }) => {
                     note: formData.note,
                     created_at: new Date().toISOString()
                   })}
-                  className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all"
+                  className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all shadow-lg shadow-cyan-900/20"
                 >
                   <Printer size={18} />
                   <span>Execute Print</span>

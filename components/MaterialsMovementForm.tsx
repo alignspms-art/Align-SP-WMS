@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Search, ChevronDown, Loader2, CheckCircle2, Printer } from 'lucide-react';
+import { X, Trash2, Search, ChevronDown, Loader2, CheckCircle2, Printer, FileDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { getPrintRoot } from '../lib/printRoot';
 import IssueSlipPrintTemplate from './IssueSlipPrintTemplate';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface MovementItem {
   id: string;
@@ -53,6 +55,36 @@ const MaterialsMovementForm: React.FC<MaterialsMovementFormProps> = ({ selectedI
         root.render(null);
       }, 1000);
     }, 500);
+  };
+
+  const handleDownloadPDF = async (mo: any) => {
+    const printSection = document.getElementById('print-section');
+    if (!printSection) return;
+
+    printSection.classList.add('printable');
+    const root = getPrintRoot(printSection);
+    root.render(<IssueSlipPrintTemplate mo={mo} />);
+
+    try {
+      // Wait for render
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const canvas = await html2canvas(printSection, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Issue_Slip_${mo.reference || mo.mo_no}.pdf`);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Failed to generate PDF. Please try printing instead.");
+    } finally {
+      printSection.classList.remove('printable');
+      root.render(null);
+    }
   };
 
   const [items, setItems] = useState<MovementItem[]>(
@@ -285,6 +317,20 @@ const MaterialsMovementForm: React.FC<MaterialsMovementFormProps> = ({ selectedI
                   <span>Print Issue Slip</span>
                 </button>
                 <button 
+                  onClick={() => handleDownloadPDF({
+                    ...printData,
+                    reference: printData.giId,
+                    mo_no: printData.moNo,
+                    items: printData.items,
+                    department: printData.department,
+                    created_at: new Date().toISOString()
+                  })}
+                  className="w-full bg-red-500 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-900/20 hover:bg-red-600 transition-all flex items-center justify-center space-x-3"
+                >
+                  <FileDown size={16} />
+                  <span>Download PDF</span>
+                </button>
+                <button 
                   onClick={() => { setShowNotification(null); onSubmit({ items }); }} 
                   className="w-full py-3 text-gray-400 font-bold text-xs uppercase tracking-widest hover:text-gray-600 transition-all"
                 >
@@ -307,20 +353,36 @@ const MaterialsMovementForm: React.FC<MaterialsMovementFormProps> = ({ selectedI
                 </button>
                 <h2 className="text-sm font-black text-[#2d808e] uppercase tracking-tight">Issue Slip Preview</h2>
               </div>
-              <button 
-                onClick={() => handlePrint({
-                  ...printData,
-                  reference: printData.giId,
-                  mo_no: printData.moNo,
-                  items: printData.items,
-                  department: printData.department,
-                  created_at: new Date().toISOString()
-                })}
-                className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all"
-              >
-                <Printer size={18} />
-                <span>Execute Print</span>
-              </button>
+              <div className="flex items-center space-x-3">
+                <button 
+                  onClick={() => handleDownloadPDF({
+                    ...printData,
+                    reference: printData.giId,
+                    mo_no: printData.moNo,
+                    items: printData.items,
+                    department: printData.department,
+                    created_at: new Date().toISOString()
+                  })}
+                  className="bg-red-500 text-white px-6 py-2 rounded-lg text-xs font-black hover:bg-red-600 flex items-center space-x-3 uppercase tracking-widest transition-all shadow-lg shadow-red-900/20"
+                >
+                  <FileDown size={18} />
+                  <span>Download PDF</span>
+                </button>
+                <button 
+                  onClick={() => handlePrint({
+                    ...printData,
+                    reference: printData.giId,
+                    mo_no: printData.moNo,
+                    items: printData.items,
+                    department: printData.department,
+                    created_at: new Date().toISOString()
+                  })}
+                  className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all shadow-lg shadow-cyan-900/20"
+                >
+                  <Printer size={18} />
+                  <span>Execute Print</span>
+                </button>
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto p-12 bg-gray-200/20">
               <div className="bg-white shadow-2xl border border-gray-200 rounded-sm printable">

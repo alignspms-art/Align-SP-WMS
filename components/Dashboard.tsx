@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import CycleCounting from './CycleCounting';
 import UserManagement from './UserManagement';
 import MoveOrderModal from './MoveOrderModal';
@@ -54,6 +56,7 @@ import {
   ShieldAlert,
   Printer,
   PackageSearch,
+  FileDown,
   MoveHorizontal,
   LogOut as LogOutIcon,
   Loader2,
@@ -1262,19 +1265,65 @@ const Dashboard: React.FC = () => {
       window.print();
       return;
     }
+    
+    // Ensure we have a clean slate
+    printSection.innerHTML = '';
     printSection.classList.add('printable');
+    
     const root = getPrintRoot(printSection);
     root.render(<IssueSlipPrintTemplate mo={mo} />);
     
     // Give a small delay for React to render into the print root
     setTimeout(() => {
       window.print();
-      // Cleanup
+      // Cleanup after print dialog closes
       setTimeout(() => {
         printSection.classList.remove('printable');
         root.render(null);
       }, 1000);
-    }, 500);
+    }, 800);
+  };
+
+  const handleDownloadPDF = async (mo: any) => {
+    const printSection = document.getElementById('print-section');
+    if (!printSection) return;
+
+    printSection.classList.add('printable');
+    const root = getPrintRoot(printSection);
+    root.render(<IssueSlipPrintTemplate mo={mo} />);
+
+    try {
+      // Wait for render
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const element = printSection.querySelector('#issue-slip-print') as HTMLElement;
+      if (!element) {
+        // Fallback to the whole print section if ID not found
+        const canvas = await html2canvas(printSection, { scale: 2, useCORS: true });
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`Issue_Slip_${mo.reference || mo.mo_no}.pdf`);
+      } else {
+        const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`Issue_Slip_${mo.reference || mo.mo_no}.pdf`);
+      }
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Failed to generate PDF. Please try printing instead.");
+    } finally {
+      printSection.classList.remove('printable');
+      root.render(null);
+    }
   };
 
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
@@ -1524,6 +1573,13 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <button 
+                  onClick={() => handleDownloadPDF({ ...previewMoRequest, isRequest: true })}
+                  className="bg-red-500 text-white px-6 py-2 rounded-lg text-xs font-black hover:bg-red-600 flex items-center space-x-3 uppercase tracking-widest transition-all shadow-lg shadow-red-900/20"
+                >
+                  <FileDown size={18} />
+                  <span>Download PDF</span>
+                </button>
+                <button 
                   onClick={() => handlePrintIssueSlip({ ...previewMoRequest, isRequest: true })}
                   className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all"
                 >
@@ -1560,6 +1616,13 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-3">
+                <button 
+                  onClick={() => handleDownloadPDF(previewMoIssue)}
+                  className="bg-red-500 text-white px-6 py-2 rounded-lg text-xs font-black hover:bg-red-600 flex items-center space-x-3 uppercase tracking-widest transition-all shadow-lg shadow-red-900/20"
+                >
+                  <FileDown size={18} />
+                  <span>Download PDF</span>
+                </button>
                 <button 
                   onClick={() => handlePrintIssueSlip(previewMoIssue)}
                   className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all"

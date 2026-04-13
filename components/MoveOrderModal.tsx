@@ -1,11 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Plus, ScanLine, Loader2, Search, Printer } from 'lucide-react';
+import { X, Trash2, Plus, ScanLine, Loader2, Search, Printer, FileDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import ScannerModal from './ScannerModal';
 import ItemSearchInput from './ItemSearchInput';
 import IssueSlipPrintTemplate from './IssueSlipPrintTemplate';
+import { getPrintRoot } from '../lib/printRoot';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface MoveOrderItem {
   id: string;
@@ -121,7 +124,54 @@ const MoveOrderModal: React.FC<MoveOrderModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  if (!isOpen) return null;
+  const handlePrint = (mo: any) => {
+    const printSection = document.getElementById('print-section');
+    if (!printSection) {
+      window.print();
+      return;
+    }
+    printSection.classList.add('printable');
+    const root = getPrintRoot(printSection);
+    root.render(<IssueSlipPrintTemplate mo={mo} />);
+    
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        printSection.classList.remove('printable');
+        root.render(null);
+      }, 1000);
+    }, 500);
+  };
+
+  const handleDownloadPDF = async (mo: any) => {
+    const printSection = document.getElementById('print-section');
+    if (!printSection) return;
+
+    printSection.classList.add('printable');
+    const root = getPrintRoot(printSection);
+    root.render(<IssueSlipPrintTemplate mo={mo} />);
+
+    try {
+      // Wait for render
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const canvas = await html2canvas(printSection, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Move_Order_${mo.reference || mo.mo_no}.pdf`);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Failed to generate PDF. Please try printing instead.");
+    } finally {
+      printSection.classList.remove('printable');
+      root.render(null);
+    }
+  };
 
   const addItem = (itemData?: Partial<MoveOrderItem>) => {
     setItems(prev => [
@@ -281,8 +331,43 @@ const MoveOrderModal: React.FC<MoveOrderModalProps> = ({ isOpen, onClose }) => {
                 </div>
                 <div className="flex items-center space-x-3">
                   <button 
-                    onClick={() => window.print()}
-                    className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all"
+                    onClick={() => handleDownloadPDF({
+                      mo_no: showSuccess,
+                      reference: refText,
+                      header_text: purpose,
+                      department: department,
+                      employee_name: employeeName,
+                      employee_id: employeeId,
+                      section: section,
+                      sub_section: subSection,
+                      shift: shift,
+                      items: items,
+                      note: note,
+                      isRequest: true,
+                      created_at: new Date().toISOString()
+                    })}
+                    className="bg-red-500 text-white px-6 py-2 rounded-lg text-xs font-black hover:bg-red-600 flex items-center space-x-3 uppercase tracking-widest transition-all shadow-lg shadow-red-900/20"
+                  >
+                    <FileDown size={18} />
+                    <span>Download PDF</span>
+                  </button>
+                  <button 
+                    onClick={() => handlePrint({
+                      mo_no: showSuccess,
+                      reference: refText,
+                      header_text: purpose,
+                      department: department,
+                      employee_name: employeeName,
+                      employee_id: employeeId,
+                      section: section,
+                      sub_section: subSection,
+                      shift: shift,
+                      items: items,
+                      note: note,
+                      isRequest: true,
+                      created_at: new Date().toISOString()
+                    })}
+                    className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all shadow-lg shadow-cyan-900/20"
                   >
                     <Printer size={18} />
                     <span>Execute Print</span>

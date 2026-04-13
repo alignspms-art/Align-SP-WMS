@@ -1,12 +1,14 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Home, Filter, Search, ChevronLeft, ChevronRight, ChevronDown, Loader2, Inbox, Eye, Printer, X as CloseIcon } from 'lucide-react';
+import { Home, Filter, Search, ChevronLeft, ChevronRight, ChevronDown, Loader2, Inbox, Eye, Printer, X as CloseIcon, FileDown } from 'lucide-react';
 import MaterialsMovementForm from './MaterialsMovementForm';
 import ManualIssue from './ManualIssue';
 import { supabase } from '../lib/supabase';
 import { getPrintRoot } from '../lib/printRoot';
 import ColumnFilter from './ColumnFilter';
 import IssueSlipPrintTemplate from './IssueSlipPrintTemplate';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface IssueItem {
   id: string;
@@ -50,6 +52,36 @@ const Issue: React.FC = () => {
         root.render(null);
       }, 1000);
     }, 500);
+  };
+
+  const handleDownloadPDF = async (mo: any) => {
+    const printSection = document.getElementById('print-section');
+    if (!printSection) return;
+
+    printSection.classList.add('printable');
+    const root = getPrintRoot(printSection);
+    root.render(<IssueSlipPrintTemplate mo={mo} />);
+
+    try {
+      // Wait for render
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const canvas = await html2canvas(printSection, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Issue_Slip_${mo.reference || mo.mo_no}.pdf`);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Failed to generate PDF. Please try printing instead.");
+    } finally {
+      printSection.classList.remove('printable');
+      root.render(null);
+    }
   };
 
   const fetchApprovedMOs = async () => {
@@ -363,6 +395,13 @@ const Issue: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-3">
+                <button 
+                  onClick={() => handleDownloadPDF(previewMo)}
+                  className="flex items-center space-x-2 px-6 py-2.5 bg-red-500 text-white rounded-lg text-xs font-black uppercase hover:bg-red-600 transition-all shadow-lg shadow-red-900/20 active:scale-95"
+                >
+                  <FileDown size={16} />
+                  <span>Download PDF</span>
+                </button>
                 <button 
                   onClick={() => handlePrint(previewMo)}
                   className="flex items-center space-x-2 px-6 py-2.5 bg-[#2d808e] text-white rounded-lg text-xs font-black uppercase hover:bg-[#256b78] transition-all shadow-lg shadow-cyan-900/20 active:scale-95"

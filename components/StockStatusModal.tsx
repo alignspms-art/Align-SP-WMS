@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Inbox, Search, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import ItemCheckStockDetailModal from './ItemCheckStockDetailModal';
 
 interface StockStatusModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ const StockStatusModal: React.FC<StockStatusModalProps> = ({ isOpen, onClose }) 
   const [searchTerm, setSearchTerm] = useState('');
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   useEffect(() => {
     if (!isOpen) {
@@ -109,7 +111,11 @@ const StockStatusModal: React.FC<StockStatusModalProps> = ({ isOpen, onClose }) 
             <tbody>
               {items.length > 0 ? (
                 items.map((item) => (
-                  <tr key={item.id} className="hover:bg-cyan-50/20 transition-colors border-b border-gray-50 last:border-0 group">
+                  <tr 
+                    key={item.id} 
+                    onClick={() => setSelectedItem(item)}
+                    className="hover:bg-cyan-50/20 transition-colors border-b border-gray-50 last:border-0 group cursor-pointer"
+                  >
                     <td className="py-4 px-6 text-center font-black text-gray-400 border-r border-gray-50">{item.sku || 'N/A'}</td>
                     <td className="py-4 px-6 text-left font-black uppercase text-gray-800 leading-tight border-r border-gray-50">{item.name}</td>
                     <td className="py-4 px-6 text-center border-r border-gray-50">
@@ -148,6 +154,12 @@ const StockStatusModal: React.FC<StockStatusModalProps> = ({ isOpen, onClose }) 
           </table>
         </div>
         
+        <ItemCheckStockDetailModal 
+          item={selectedItem} 
+          isOpen={!!selectedItem} 
+          onClose={() => setSelectedItem(null)} 
+        />
+
         {/* Footer */}
         <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-t border-gray-100">
            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Master Item Registry Node</span>
