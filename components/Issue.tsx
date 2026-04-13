@@ -4,6 +4,7 @@ import { Home, Filter, Search, ChevronLeft, ChevronRight, ChevronDown, Loader2, 
 import MaterialsMovementForm from './MaterialsMovementForm';
 import ManualIssue from './ManualIssue';
 import { supabase } from '../lib/supabase';
+import { getPrintRoot } from '../lib/printRoot';
 import ColumnFilter from './ColumnFilter';
 import IssueSlipPrintTemplate from './IssueSlipPrintTemplate';
 
@@ -31,6 +32,25 @@ const Issue: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [previewMo, setPreviewMo] = useState<any | null>(null);
+
+  const handlePrint = (mo: any) => {
+    const printSection = document.getElementById('print-section');
+    if (!printSection) {
+      window.print();
+      return;
+    }
+    printSection.classList.add('printable');
+    const root = getPrintRoot(printSection);
+    root.render(<IssueSlipPrintTemplate mo={mo} />);
+    
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        printSection.classList.remove('printable');
+        root.render(null);
+      }, 1000);
+    }, 500);
+  };
 
   const fetchApprovedMOs = async () => {
     setLoading(true);
@@ -344,7 +364,7 @@ const Issue: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <button 
-                  onClick={() => window.print()}
+                  onClick={() => handlePrint(previewMo)}
                   className="flex items-center space-x-2 px-6 py-2.5 bg-[#2d808e] text-white rounded-lg text-xs font-black uppercase hover:bg-[#256b78] transition-all shadow-lg shadow-cyan-900/20 active:scale-95"
                 >
                   <Printer size={16} />
