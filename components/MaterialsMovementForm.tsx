@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Trash2, Search, ChevronDown, Loader2, CheckCircle2, Printer } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { getPrintRoot } from '../lib/printRoot';
 import IssueSlipPrintTemplate from './IssueSlipPrintTemplate';
 
 interface MovementItem {
@@ -34,6 +35,26 @@ const MaterialsMovementForm: React.FC<MaterialsMovementFormProps> = ({ selectedI
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [printData, setPrintData] = useState<any>(null);
   const [departments, setDepartments] = useState<string[]>([]);
+
+  const handlePrint = (mo: any) => {
+    const printSection = document.getElementById('print-section');
+    if (!printSection) {
+      window.print();
+      return;
+    }
+    printSection.classList.add('printable');
+    const root = getPrintRoot(printSection);
+    root.render(<IssueSlipPrintTemplate mo={mo} />);
+    
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        printSection.classList.remove('printable');
+        root.render(null);
+      }, 1000);
+    }, 500);
+  };
+
   const [items, setItems] = useState<MovementItem[]>(
     selectedItems.map(item => {
       const moId = item.fullMo?.id;
@@ -287,7 +308,14 @@ const MaterialsMovementForm: React.FC<MaterialsMovementFormProps> = ({ selectedI
                 <h2 className="text-sm font-black text-[#2d808e] uppercase tracking-tight">Issue Slip Preview</h2>
               </div>
               <button 
-                onClick={() => window.print()}
+                onClick={() => handlePrint({
+                  ...printData,
+                  reference: printData.giId,
+                  mo_no: printData.moNo,
+                  items: printData.items,
+                  department: printData.department,
+                  created_at: new Date().toISOString()
+                })}
                 className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all"
               >
                 <Printer size={18} />
