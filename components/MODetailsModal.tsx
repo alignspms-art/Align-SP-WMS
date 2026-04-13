@@ -2,6 +2,7 @@
 import React from 'react';
 import { X, Printer } from 'lucide-react';
 import MOPrintTemplate from './MOPrintTemplate';
+import { getPrintRoot } from '../lib/printRoot';
 
 interface MODetailsModalProps {
   mo: any;
@@ -12,7 +13,23 @@ const MODetailsModal: React.FC<MODetailsModalProps> = ({ mo, onClose }) => {
   if (!mo) return null;
 
   const handlePrint = () => {
-    window.print();
+    const printSection = document.getElementById('print-section');
+    if (!printSection) {
+      window.print();
+      return;
+    }
+
+    printSection.classList.add('printable');
+    const root = getPrintRoot(printSection);
+    root.render(<MOPrintTemplate mo={mo} />);
+
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        printSection.classList.remove('printable');
+        root.render(null);
+      }, 1000);
+    }, 500);
   };
 
   return (
