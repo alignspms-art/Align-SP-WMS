@@ -59,10 +59,18 @@
           display: none !important;
         }
         
-        body {
+        html, body {
           background: white !important;
           margin: 0 !important;
           padding: 0 !important;
+          height: auto !important;
+          overflow: visible !important;
+        }
+
+        #root, #root > div {
+          height: auto !important;
+          overflow: visible !important;
+          display: block !important;
         }
 
         /* Hide the main dashboard layout elements during print */
@@ -86,9 +94,16 @@
           visibility: visible !important;
         }
 
+        /* Ensure internal scrollable areas are visible during print */
+        .print-mode-active .overflow-y-auto {
+          overflow: visible !important;
+          height: auto !important;
+          max-height: none !important;
+        }
+
         /* Ensure the printable area takes full width and is visible */
         .printable {
-          display: block;
+          display: block !important;
           visibility: visible !important;
           width: 100% !important;
           max-width: none !important;
