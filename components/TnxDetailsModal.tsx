@@ -2,6 +2,7 @@
 import React from 'react';
 import { X, Printer } from 'lucide-react';
 import TnxPrintTemplate from './TnxPrintTemplate';
+import { getPrintRoot } from '../lib/printRoot';
 
 interface TnxDetailsModalProps {
   tnx: any;
@@ -12,7 +13,22 @@ const TnxDetailsModal: React.FC<TnxDetailsModalProps> = ({ tnx, onClose }) => {
   if (!tnx) return null;
 
   const handlePrint = () => {
-    window.print();
+    const printSection = document.getElementById('print-section');
+    if (!printSection) {
+      window.print();
+      return;
+    }
+    printSection.classList.add('printable');
+    const root = getPrintRoot(printSection);
+    root.render(<TnxPrintTemplate tnx={tnx} />);
+    
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        printSection.classList.remove('printable');
+        root.render(null);
+      }, 1000);
+    }, 500);
   };
 
   return (
