@@ -31,6 +31,8 @@ import IssueSlipPrintTemplate from './IssueSlipPrintTemplate';
 import LowStockInventory from './LowStockInventory';
 import ABCAnalysis from './ABCAnalysis';
 import ReportingIssueReceive from './ReportingIssueReceive';
+import ItemDetailViewModal from './ItemDetailViewModal';
+import { getPrintRoot } from '../lib/printRoot';
 import { supabase } from '../lib/supabase';
 import { 
   Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -1167,6 +1169,7 @@ const Dashboard: React.FC = () => {
   const [previewMoIssue, setPreviewMoIssue] = useState<any>(null);
   const [previewMoDetail, setPreviewMoDetail] = useState<any>(null);
   const [previewTnx, setPreviewTnx] = useState<any>(null);
+  const [previewItem, setPreviewItem] = useState<any>(null);
   const [previewGrn, setPreviewGrn] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{pr: any[], po: any[], mo: any[], items: any[], grn: any[], transactions: any[]}>({ pr: [], po: [], mo: [], items: [], grn: [], transactions: [] });
@@ -1227,7 +1230,7 @@ const Dashboard: React.FC = () => {
     if (type === 'mo-request') setPreviewMoRequest(obj);
     if (type === 'mo-issue') setPreviewMoIssue(obj);
     if (type === 'grn') setPreviewGrn(obj.grn_no);
-    if (type === 'item') navigate('/item-list');
+    if (type === 'item') setPreviewItem(obj);
     if (type === 'transaction') {
       if (obj.type === 'Issue') {
         // Try to find the corresponding move order for issue slip preview
@@ -1251,6 +1254,27 @@ const Dashboard: React.FC = () => {
         setPreviewTnx(obj);
       }
     }
+  };
+
+  const handlePrintIssueSlip = (mo: any) => {
+    const printSection = document.getElementById('print-section');
+    if (!printSection) {
+      window.print();
+      return;
+    }
+    printSection.classList.add('printable');
+    const root = getPrintRoot(printSection);
+    root.render(<IssueSlipPrintTemplate mo={mo} />);
+    
+    // Give a small delay for React to render into the print root
+    setTimeout(() => {
+      window.print();
+      // Cleanup
+      setTimeout(() => {
+        printSection.classList.remove('printable');
+        root.render(null);
+      }, 1000);
+    }, 500);
   };
 
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
@@ -1480,6 +1504,7 @@ const Dashboard: React.FC = () => {
       <MoveOrderModal isOpen={isMoveOrderModalOpen} onClose={() => setIsMoveOrderModalOpen(false)} />
       <LocationTransferModal isOpen={isLocationTransferModalOpen} onClose={() => setIsLocationTransferModalOpen(false)} />
       <StockStatusModal isOpen={isStockStatusModalOpen} onClose={() => setIsStockStatusModalOpen(false)} />
+      <ItemDetailViewModal item={previewItem} isOpen={!!previewItem} onClose={() => setPreviewItem(null)} />
       {previewPr && <PRPreviewModal pr={previewPr} onClose={() => { setPreviewPr(null); setRefreshKey(prev => prev + 1); }} />}
       {previewPo && <POPreviewModal po={previewPo} onClose={() => { setPreviewPo(null); setRefreshKey(prev => prev + 1); }} />}
       {previewMo && <MOApprovalModal mo={previewMo} isOpen={!!previewMo} onClose={() => { setPreviewMo(null); setRefreshKey(prev => prev + 1); }} />}
@@ -1499,7 +1524,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <button 
-                  onClick={() => window.print()}
+                  onClick={() => handlePrintIssueSlip({ ...previewMoRequest, isRequest: true })}
                   className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all"
                 >
                   <Printer size={18} />
@@ -1536,7 +1561,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <button 
-                  onClick={() => window.print()}
+                  onClick={() => handlePrintIssueSlip(previewMoIssue)}
                   className="bg-[#2d808e] text-white px-8 py-2 rounded-lg text-xs font-black hover:bg-[#256b78] flex items-center space-x-3 uppercase tracking-widest transition-all"
                 >
                   <Printer size={18} />
