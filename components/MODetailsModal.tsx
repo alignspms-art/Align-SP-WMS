@@ -7,9 +7,10 @@ import { getPrintRoot } from '../lib/printRoot';
 interface MODetailsModalProps {
   mo: any;
   onClose: () => void;
+  onApprove?: () => void;
 }
 
-const MODetailsModal: React.FC<MODetailsModalProps> = ({ mo, onClose }) => {
+const MODetailsModal: React.FC<MODetailsModalProps> = ({ mo, onClose, onApprove }) => {
   if (!mo) return null;
 
   const handlePrint = () => {
@@ -43,7 +44,20 @@ const MODetailsModal: React.FC<MODetailsModalProps> = ({ mo, onClose }) => {
             </button>
             <div className="flex flex-col">
               <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Move Order Detail Node</h2>
-              <p className="text-sm font-black text-[#2d808e] tracking-tight uppercase mt-1">Transaction Ref: {mo.reference || mo.mo_no}</p>
+              <div className="flex items-center gap-3 mt-1">
+                <p className="text-sm font-black text-[#2d808e] tracking-tight uppercase">Transaction Ref: {mo.reference || mo.mo_no}</p>
+                {mo.status === 'On Hold' && (
+                  <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-[10px] font-black uppercase rounded border border-yellow-200">Hold</span>
+                )}
+              </div>
+              {mo.status === 'On Hold' && onApprove && (
+                <button 
+                  onClick={onApprove}
+                  className="mt-2 text-[10px] font-black text-white bg-orange-500 px-3 py-1 rounded hover:bg-orange-600 transition-all uppercase tracking-widest w-fit shadow-sm"
+                >
+                  MO Approvals
+                </button>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-3">

@@ -33,6 +33,7 @@ import IssueSlipPrintTemplate from './IssueSlipPrintTemplate';
 import LowStockInventory from './LowStockInventory';
 import ABCAnalysis from './ABCAnalysis';
 import ReportingIssueReceive from './ReportingIssueReceive';
+import MovingUpdate from './MovingUpdate';
 import ItemDetailViewModal from './ItemDetailViewModal';
 import { getPrintRoot } from '../lib/printRoot';
 import { supabase } from '../lib/supabase';
@@ -62,6 +63,7 @@ import {
   Loader2,
   X,
   CheckCircle2,
+  AlertCircle,
   Truck,
   BarChart3,
   ArrowRight,
@@ -274,7 +276,7 @@ const DashboardOverview: React.FC<{
     if (moApprovals) setPendingMos(moApprovals);
     const { data: prLogs } = await supabase.from('requisitions').select('*').order('created_at', { ascending: false });
     if (prLogs) setLatestPRs(prLogs);
-    const { data: moLogs } = await supabase.from('move_orders').select('*').in('status', ['Approved', 'Completed']).order('created_at', { ascending: false });
+    const { data: moLogs } = await supabase.from('move_orders').select('*').in('status', ['Approved', 'Completed', 'On Hold', 'Pending']).order('created_at', { ascending: false }).limit(10);
     if (moLogs) setLatestMOs(moLogs);
     const { data: grnLogs, error: grnError } = await supabase.from('grns').select('*').order('created_at', { ascending: false });
     if (grnError) console.error('Error fetching GRNs:', grnError);
@@ -683,6 +685,7 @@ const DashboardOverview: React.FC<{
                     <th className="px-4 py-4 text-center border-r border-gray-50">TNX.NO</th>
                     <th className="px-4 py-4 border-r border-gray-50">ITEM NAME</th>
                     <th className="px-4 py-4 text-center border-r border-gray-50">QTY</th>
+                    <th className="px-4 py-4 text-center border-r border-gray-50">STATUS</th>
                     <th className="px-4 py-4 text-right">VALUE</th>
                   </tr>
                 </thead>
@@ -698,14 +701,36 @@ const DashboardOverview: React.FC<{
                     }, 0);
 
                     return (
-                      <tr key={mo.id} className="hover:bg-gray-50/40 transition-colors">
+                      <tr key={mo.id} className={`hover:bg-gray-50/40 transition-colors ${mo.status === 'On Hold' ? 'bg-yellow-50/50' : ''}`}>
                         <td className="px-2 py-4 text-center text-gray-400 border-r border-gray-50">{idx + 1}</td>
                         <td className="px-4 py-4 text-center border-r border-gray-50 whitespace-nowrap text-gray-600">{formatDateShort(mo.created_at)}</td>
                         <td className="px-4 py-4 text-center border-r border-gray-50">
-                          <button onClick={() => onPreviewMoDetail(mo)} className="text-blue-500 font-bold hover:underline transition-all">{mo.reference || mo.mo_no}</button>
+                          <button 
+                            onClick={() => onPreviewMoDetail(mo)} 
+                            className={`font-bold hover:underline transition-all ${mo.status === 'On Hold' ? 'text-orange-600' : 'text-blue-500'}`}
+                          >
+                            {mo.reference || mo.mo_no}
+                          </button>
                         </td>
                         <td className="px-4 py-4 uppercase truncate max-w-[200px] font-medium text-gray-700 border-r border-gray-50" title={itemNameDisplay}>{itemNameDisplay}</td>
                         <td className="px-4 py-4 text-center font-bold text-gray-800 border-r border-gray-50">{totalQty}</td>
+                        <td className="px-4 py-4 text-center border-r border-gray-50 whitespace-nowrap">
+                          {mo.status === 'Approved' || mo.status === 'Completed' ? (
+                            <div className="flex items-center justify-center text-emerald-500">
+                              <CheckCircle2 size={12} className="mr-1" />
+                              <span className="text-[10px] font-black uppercase">Approved</span>
+                            </div>
+                          ) : mo.status === 'On Hold' ? (
+                            <div className="flex items-center justify-center text-orange-500">
+                              <AlertCircle size={12} className="mr-1" />
+                              <span className="text-[10px] font-black uppercase">Hold</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center text-blue-500">
+                              <span className="text-[10px] font-black uppercase">Created</span>
+                            </div>
+                          )}
+                        </td>
                         <td className="px-4 py-4 text-right font-bold text-gray-800">{formatCurrency(mo.total_value)}</td>
                       </tr>
                     );
@@ -1330,7 +1355,7 @@ const Dashboard: React.FC = () => {
     purchase: location.pathname.includes('requisition') || location.pathname.includes('purchase-order') || location.pathname.includes('supplier') || location.pathname.includes('purchase-report'),
     warehouse: location.pathname.includes('inventory') || location.pathname.includes('receive') || location.pathname.includes('issue') || location.pathname.includes('tnx-report') || location.pathname.includes('mo-report'),
     itemMaster: location.pathname.includes('item-list') || location.pathname.includes('item-uom') || location.pathname.includes('item-type') || location.pathname.includes('cost-center'),
-    analysis: location.pathname.includes('low-stock') || location.pathname.includes('abc-analysis'),
+    analysis: location.pathname.includes('low-stock') || location.pathname.includes('abc-analysis') || location.pathname.includes('moving-update'),
     admin: location.pathname.includes('users')
   });
 
@@ -1453,6 +1478,7 @@ const Dashboard: React.FC = () => {
           >
             {hasGranularPermission('low_stock_inventory', 'view') && <SubmenuItem icon={<ShieldAlert />} label="Low Stock Inventory" active={activeTab === 'low-stock'} onClick={() => menuNavigate('/low-stock')} />}
             {hasGranularPermission('abc_analysis', 'view') && <SubmenuItem icon={<TrendingUp />} label="ABC Analysis" active={activeTab === 'abc-analysis'} onClick={() => menuNavigate('/abc-analysis')} />}
+            <SubmenuItem icon={<MoveHorizontal />} label="Moving Update" active={activeTab === 'moving-update'} onClick={() => menuNavigate('/moving-update')} />
             {hasGranularPermission('issue_report', 'view') && <SubmenuItem icon={<FileText />} label="Reporting Issue and Receive" active={activeTab === 'reporting-issue-receive'} onClick={() => menuNavigate('/reporting-issue-receive')} />}
           </SidebarItem>
         )}
@@ -1539,6 +1565,7 @@ const Dashboard: React.FC = () => {
               <Route path="/users" element={<UserManagement />} /><Route path="/requisition" element={<PurchaseRequisition />} /><Route path="/purchase-order" element={<PurchaseOrder />} /><Route path="/supplier" element={<Supplier />} /><Route path="/purchase-report" element={<PurchaseReport />} /><Route path="/inventory" element={<Inventory />} /><Route path="/receive" element={<Receive />} /><Route path="/issue" element={<Issue />} /><Route path="/tnx-report" element={<TnxReport />} /><Route path="/mo-report" element={<MOReport />} /><Route path="/item-list" element={<ItemList />} /><Route path="/item-uom" element={<ItemUOM />} /><Route path="/item-type" element={<ItemType />} /><Route path="/cost-center" element={<CostCenter />} /><Route path="/label" element={<LabelManagement />} />              <Route path="/cycle-counting" element={<CycleCounting />} />
               <Route path="/low-stock" element={hasGranularPermission('low_stock_inventory', 'view') ? <LowStockInventory /> : <Navigate to="/overview" replace />} />
               <Route path="/abc-analysis" element={hasGranularPermission('abc_analysis', 'view') ? <ABCAnalysis /> : <Navigate to="/overview" replace />} />
+              <Route path="/moving-update" element={<MovingUpdate />} />
               <Route path="/reporting-issue-receive" element={hasGranularPermission('issue_report', 'view') ? <ReportingIssueReceive /> : <Navigate to="/overview" replace />} />
               <Route path="/" element={<Navigate to="/overview" replace />} />
             </Routes>
@@ -1557,7 +1584,16 @@ const Dashboard: React.FC = () => {
       {previewPr && <PRPreviewModal pr={previewPr} onClose={() => { setPreviewPr(null); setRefreshKey(prev => prev + 1); }} />}
       {previewPo && <POPreviewModal po={previewPo} onClose={() => { setPreviewPo(null); setRefreshKey(prev => prev + 1); }} />}
       {previewMo && <MOApprovalModal mo={previewMo} isOpen={!!previewMo} onClose={() => { setPreviewMo(null); setRefreshKey(prev => prev + 1); }} />}
-      {previewMoDetail && <MODetailsModal mo={previewMoDetail} onClose={() => setPreviewMoDetail(null)} />}
+      {previewMoDetail && (
+        <MODetailsModal 
+          mo={previewMoDetail} 
+          onClose={() => setPreviewMoDetail(null)} 
+          onApprove={() => {
+            setPreviewMo(previewMoDetail);
+            setPreviewMoDetail(null);
+          }}
+        />
+      )}
       {previewMoRequest && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto print-mode-active">
           <div className="bg-[#fcfcfc] w-full max-w-[1100px] rounded-xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[96vh] animate-in fade-in zoom-in duration-300">

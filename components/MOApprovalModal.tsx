@@ -100,12 +100,48 @@ const MOApprovalModal: React.FC<MOApprovalModalProps> = ({ mo, isOpen, onClose }
 
     setIsSubmitting(true);
     try {
-      // 1. Update Move Order status to Approved
-      // NOTE: Stock reduction is deferred until "Commit Materials Movement" (MO Issue)
+      // Step 0: Stock Reduction Logic
+      // Check if this MO has already been issued to prevent double reduction
+      if (mo.status !== 'Completed') {
+        for (const item of items) {
+          if (!item.verified) continue;
+
+          const qtyToIssue = Number(item.issuedQty) || 0;
+          // Find if any quantity was previously issued (partial issue support)
+          const originalItem = mo.items?.find((i: any) => i.sku === item.sku);
+          const alreadyIssued = Number(originalItem?.issuedQty) || 0;
+          const netNewIssue = qtyToIssue - alreadyIssued;
+
+          if (netNewIssue > 0) {
+            // Call the stock reduction RPC
+            const { error: stockError } = await supabase.rpc('update_item_stock', {
+              item_sku: item.sku,
+              qty_change: -netNewIssue,
+              is_receive: false,
+              ref_no: mo.reference || mo.mo_no || 'N/A',
+              dept: mo.department || 'N/A'
+            });
+
+            if (stockError) throw stockError;
+
+            // Updated master item last issue metadata
+            await supabase
+              .from('items')
+              .update({ 
+                last_issued_qty: netNewIssue,
+                last_issued_date: new Date().toISOString(),
+                cost_center: mo.department || 'N/A'
+              })
+              .eq('sku', item.sku);
+          }
+        }
+      }
+
+      // 1. Update Move Order status to Completed
       const { error: updateError } = await supabase
         .from('move_orders')
         .update({ 
-          status: 'Approved',
+          status: 'Completed',
           items: items, // Save with issuedQty and verified status
           updated_at: new Date().toISOString(),
           updated_by: user?.fullName || 'System'
@@ -116,7 +152,7 @@ const MOApprovalModal: React.FC<MOApprovalModalProps> = ({ mo, isOpen, onClose }
 
       setShowPrintPreview(true);
     } catch (err: any) {
-      alert("Approval failed: " + err.message);
+      alert("Approval & Stock Reduction failed: " + err.message);
     } finally {
       setIsSubmitting(false);
     }
