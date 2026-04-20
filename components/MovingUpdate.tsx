@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { Home, Search, FileDown, Loader2, Filter, RefreshCw } from "lucide-react";
-import * as XLSX from "xlsx";
+import { Home, Search, FileDown, Loader2, Filter, RefreshCw } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface InventoryItem {
   id: string;
@@ -18,36 +18,32 @@ interface InventoryItem {
 const MovingUpdate: React.FC = () => {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [timeFilter, setTimeFilter] = useState<{ type: "month" | "year"; value: number }>({ type: "month", value: 1 });
-  const [searchTerm, setSearchTerm] = useState("");
+  const [timeFilter, setTimeFilter] = useState<{ type: 'month' | 'year'; value: number }>({ type: 'month', value: 1 });
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Fetch all items
       const { data: allItems, error: itemsError } = await supabase
-        .from("items")
-        .select("*");
+        .from('items')
+        .select('*');
       
       if (itemsError) throw itemsError;
 
-      // 2. Calculate cutoff date
       const cutoffDate = new Date();
-      if (timeFilter.type === "month") {
+      if (timeFilter.type === 'month') {
         cutoffDate.setMonth(cutoffDate.getMonth() - timeFilter.value);
       } else {
         cutoffDate.setFullYear(cutoffDate.getFullYear() - timeFilter.value);
       }
 
-      // 3. Fetch move orders in that range to find "Moved" items
       const { data: recentMOs, error: moError } = await supabase
-        .from("move_orders")
-        .select("items, created_at")
-        .gte("created_at", cutoffDate.toISOString());
+        .from('move_orders')
+        .select('items, created_at')
+        .gte('created_at', cutoffDate.toISOString());
 
       if (moError) throw moError;
 
-      // 4. Collect SKUs that HAVE moved
       const movedSKUs = new Set<string>();
       if (recentMOs) {
         (recentMOs as any[]).forEach((mo: any) => {
@@ -61,7 +57,6 @@ const MovingUpdate: React.FC = () => {
         });
       }
 
-      // 5. Filter items that have NOT moved
       const nonMovingItems = (allItems as InventoryItem[] | null)?.filter((item: InventoryItem) => {
         const matchesSearch = !searchTerm || 
           item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -73,7 +68,7 @@ const MovingUpdate: React.FC = () => {
 
       setItems(nonMovingItems);
     } catch (err) {
-      console.error("Error fetching moving update data:", err);
+      console.error('Error fetching moving update data:', err);
     } finally {
       setLoading(false);
     }
@@ -85,20 +80,20 @@ const MovingUpdate: React.FC = () => {
 
   const handleDownloadExcel = () => {
     const exportData = items.map((item, idx) => ({
-      "SL": idx + 1,
-      "Code": item.code,
-      "SKU": item.sku,
-      "Item Name": item.name,
-      "Location": item.location,
-      "UOM": item.uom,
-      "Type": item.type,
-      "Stock": item.on_hand_stock,
-      "Last Issued": item.last_issued ? new Date(item.last_issued).toLocaleDateString() : "Never"
+      'SL': idx + 1,
+      'Code': item.code,
+      'SKU': item.sku,
+      'Item Name': item.name,
+      'Location': item.location,
+      'UOM': item.uom,
+      'Type': item.type,
+      'Stock': item.on_hand_stock,
+      'Last Issued': item.last_issued ? new Date(item.last_issued).toLocaleDateString() : 'Never'
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Non-Moving Items");
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Non-Moving Items');
     
     const fileName = `Non_Moving_Items_${timeFilter.value}_${timeFilter.type}s.xlsx`;
     XLSX.writeFile(workbook, fileName);
@@ -129,14 +124,14 @@ const MovingUpdate: React.FC = () => {
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center bg-gray-50 rounded-lg p-1 border border-gray-100">
             <button 
-              onClick={() => setTimeFilter({ ...timeFilter, type: "month" })}
-              className={`px-4 py-1.5 rounded-md text-[11px] font-black uppercase transition-all ${timeFilter.type === "month" ? "bg-[#2d808e] text-white shadow-md" : "text-gray-400 hover:text-gray-600"}`}
+              onClick={() => setTimeFilter({ ...timeFilter, type: 'month' })}
+              className={`px-4 py-1.5 rounded-md text-[11px] font-black uppercase transition-all ${timeFilter.type === 'month' ? 'bg-[#2d808e] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
             >
               Monthly
             </button>
             <button 
-              onClick={() => setTimeFilter({ ...timeFilter, type: "year" })}
-              className={`px-4 py-1.5 rounded-md text-[11px] font-black uppercase transition-all ${timeFilter.type === "year" ? "bg-[#2d808e] text-white shadow-md" : "text-gray-400 hover:text-gray-600"}`}
+              onClick={() => setTimeFilter({ ...timeFilter, type: 'year' })}
+              className={`px-4 py-1.5 rounded-md text-[11px] font-black uppercase transition-all ${timeFilter.type === 'year' ? 'bg-[#2d808e] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
             >
               Yearly
             </button>
@@ -149,13 +144,13 @@ const MovingUpdate: React.FC = () => {
               onChange={(e) => setTimeFilter({ ...timeFilter, value: parseInt(e.target.value) })}
               className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-bold text-[#2d808e] outline-none focus:ring-2 focus:ring-[#2d808e]/20"
             >
-              {timeFilter.type === "month" ? (
+              {timeFilter.type === 'month' ? (
                 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
-                  <option key={m} value={m}>{m} {m === 1 ? "Month" : "Months"}</option>
+                  <option key={m} value={m}>{m} {m === 1 ? 'Month' : 'Months'}</option>
                 ))
               ) : (
                 [1, 2, 3, 4, 5].map(y => (
-                  <option key={y} value={y}>{y} {y === 1 ? "Year" : "Years"}</option>
+                  <option key={y} value={y}>{y} {y === 1 ? 'Year' : 'Years'}</option>
                 ))
               )}
             </select>
@@ -170,7 +165,7 @@ const MovingUpdate: React.FC = () => {
               placeholder="Filter by Name/SKU/Code..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && fetchItems()}
+              onKeyDown={(e) => e.key === 'Enter' && fetchItems()}
               className="w-full pl-9 pr-4 py-1.5 bg-gray-50 border border-transparent rounded-lg outline-none text-[11px] font-medium text-gray-600 focus:bg-white focus:border-[#2d808e]/30 transition-all"
             />
           </div>
@@ -185,7 +180,7 @@ const MovingUpdate: React.FC = () => {
             className="p-2 text-[#2d808e] hover:bg-cyan-50 rounded-lg transition-all"
             title="Refresh Report"
           >
-            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
@@ -235,7 +230,7 @@ const MovingUpdate: React.FC = () => {
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="text-gray-800 font-black uppercase tracking-tight">{item.name}</span>
-                        <span className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">{item.type || "N/A"} • {item.location || "N/A"}</span>
+                        <span className="text-[9px] text-gray-400 font-bold uppercase mt-0.5">{item.type || 'N/A'} • {item.location || 'N/A'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -243,13 +238,13 @@ const MovingUpdate: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center">
-                        <span className={`text-[13px] font-black ${item.on_hand_stock <= 0 ? "text-red-500" : "text-[#2d808e]"}`}>{item.on_hand_stock}</span>
+                        <span className={`text-[13px] font-black ${item.on_hand_stock <= 0 ? 'text-red-500' : 'text-[#2d808e]'}`}>{item.on_hand_stock}</span>
                         <span className="text-[8px] font-black text-gray-300 uppercase tracking-wider">On-Hand</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center">
-                        <span className="text-gray-600 font-bold">{item.last_issued ? new Date(item.last_issued).toLocaleDateString("en-GB") : "N/A"}</span>
+                        <span className="text-gray-600 font-bold">{item.last_issued ? new Date(item.last_issued).toLocaleDateString('en-GB') : 'N/A'}</span>
                         <span className="text-[8px] font-black text-gray-300 uppercase tracking-wider">Last Issue</span>
                       </div>
                     </td>
