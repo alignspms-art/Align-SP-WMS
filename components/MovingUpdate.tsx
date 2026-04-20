@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Home, Search, FileDown, Loader2, Filter, RefreshCw, MoveHorizontal } from 'lucide-react';
+import { Home, Search, FileDown, Loader2, Filter, RefreshCw } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { supabase } from '../lib/supabase';
 
@@ -38,14 +38,14 @@ const MovingUpdate: React.FC = () => {
 
       // 4. Collect SKUs that HAVE moved
       const movedSKUs = new Set<string>();
-      recentMOs?.forEach(mo => {
+      (recentMOs as any[])?.forEach((mo: any) => {
         mo.items?.forEach((item: any) => {
           if (item.sku) movedSKUs.add(item.sku);
         });
       });
 
       // 5. Filter items that have NOT moved
-      const nonMovingItems = allItems?.filter(item => {
+      const nonMovingItems = (allItems as any[])?.filter((item: any) => {
         const matchesSearch = !searchTerm || 
           item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
           item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
