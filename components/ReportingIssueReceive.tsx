@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Home, Download, Loader2, RefreshCw } from 'lucide-react';
+import { Home, Download, Loader2, BarChart3, PieChart as PieChartIcon, Edit3, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,

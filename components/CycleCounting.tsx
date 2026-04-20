@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Home, ScanLine, Plus, X, Loader2, CheckCircle2, History, FileSpreadsheet, Calendar } from 'lucide-react';
+import { Home, ScanLine, Plus, X, Loader2, CheckCircle2, History, FileSpreadsheet, Calendar, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import ScannerModal from './ScannerModal';

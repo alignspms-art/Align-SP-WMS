@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Home, Inbox, Loader2 } from 'lucide-react';
+import { Home, Inbox, Filter, ChevronDown, Search, Loader2 } from 'lucide-react';
 import ManualGRN from './ManualGRN';
 import MakeGRNForm from './MakeGRNForm';
 import { supabase } from '../lib/supabase';
@@ -15,7 +15,7 @@ const Receive: React.FC = () => {
   const fetchPendingPOItems = async () => {
     setLoading(true);
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('purchase_orders')
         .select('*')
         .in('status', ['Open', 'Approved'])
@@ -62,7 +62,7 @@ const Receive: React.FC = () => {
     fetchPendingPOItems();
   }, []);
 
-  const handleManualGRNSubmit = () => {
+  const handleManualGRNSubmit = (data: any) => {
     setView('list');
     fetchPendingPOItems();
   };

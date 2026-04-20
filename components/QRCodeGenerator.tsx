@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Home, Printer, Loader2, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getPrintRoot } from '../lib/printRoot';

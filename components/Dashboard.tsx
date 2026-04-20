@@ -33,6 +33,7 @@ import IssueSlipPrintTemplate from './IssueSlipPrintTemplate';
 import LowStockInventory from './LowStockInventory';
 import ABCAnalysis from './ABCAnalysis';
 import ReportingIssueReceive from './ReportingIssueReceive';
+import MovingUpdate from './MovingUpdate';
 import ItemDetailViewModal from './ItemDetailViewModal';
 import { getPrintRoot } from '../lib/printRoot';
 import { supabase } from '../lib/supabase';
@@ -757,6 +758,8 @@ const DashboardOverview: React.FC<{
                 </thead>
                 <tbody className="text-[12px] font-medium">
                   {latestPRs.map((pr, idx) => {
+                    const totalQty = pr.items?.reduce((acc: number, i: any) => acc + (Number(i.reqQty) || 0), 0);
+                    
                     return (
                       <tr key={pr.id} className="hover:bg-gray-50/40 transition-colors">
                         <td className="px-2 py-4 text-center text-gray-400 border-r border-gray-50">{idx + 1}</td>
@@ -844,6 +847,8 @@ const DashboardOverview: React.FC<{
                 </thead>
                 <tbody className="text-[12px] font-medium">
                   {latestPOs.map((po, idx) => {
+                    const totalQty = po.items?.reduce((acc: number, i: any) => acc + (Number(i.poQty) || 0), 0);
+                    
                     return (
                       <tr key={po.id} className="hover:bg-gray-50/40 transition-colors">
                         <td className="px-2 py-4 text-center text-gray-400 border-r border-gray-50">{idx + 1}</td>
@@ -933,7 +938,7 @@ const ProfileModal: React.FC<{ user: any, isOpen: boolean, onClose: () => void, 
           <div className="flex flex-wrap gap-2 max-h-[150px] overflow-y-auto scrollbar-thin pr-2">
             {user?.granularPermissions && Object.entries(user.granularPermissions).map(([moduleId, perms]: [string, any]) => {
               if (moduleId === '_metadata') return null;
-              const activeActions = Object.entries(perms).filter(([, val]) => val === true).map(([action]) => action);
+              const activeActions = Object.entries(perms).filter(([_, val]) => val === true).map(([action]) => action);
               if (activeActions.length === 0) return null;
               
               return (
@@ -1473,6 +1478,7 @@ const Dashboard: React.FC = () => {
           >
             {hasGranularPermission('low_stock_inventory', 'view') && <SubmenuItem icon={<ShieldAlert />} label="Low Stock Inventory" active={activeTab === 'low-stock'} onClick={() => menuNavigate('/low-stock')} />}
             {hasGranularPermission('abc_analysis', 'view') && <SubmenuItem icon={<TrendingUp />} label="ABC Analysis" active={activeTab === 'abc-analysis'} onClick={() => menuNavigate('/abc-analysis')} />}
+            <SubmenuItem icon={<MoveHorizontal />} label="Moving Update" active={activeTab === 'moving-update'} onClick={() => menuNavigate('/moving-update')} />
             {hasGranularPermission('issue_report', 'view') && <SubmenuItem icon={<FileText />} label="Reporting Issue and Receive" active={activeTab === 'reporting-issue-receive'} onClick={() => menuNavigate('/reporting-issue-receive')} />}
           </SidebarItem>
         )}
@@ -1556,24 +1562,10 @@ const Dashboard: React.FC = () => {
           <div className="max-w-[1600px] mx-auto w-full">
             <Routes>
               <Route path="/overview" element={<DashboardOverview refreshKey={refreshKey} onCheckStock={() => setIsStockStatusModalOpen(true)} onMoveOrder={() => setIsMoveOrderModalOpen(true)} onLocTransfer={() => setIsLocationTransferModalOpen(true)} onPreviewPr={setPreviewPr} onPreviewPo={setPreviewPo} onPreviewMo={setPreviewMo} onPreviewMoDetail={setPreviewMoDetail} onPreviewGrn={setPreviewGrn} />} />
-              <Route path="/users" element={<UserManagement />} />
-              <Route path="/requisition" element={<PurchaseRequisition />} />
-              <Route path="/purchase-order" element={<PurchaseOrder />} />
-              <Route path="/supplier" element={<Supplier />} />
-              <Route path="/purchase-report" element={<PurchaseReport />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/receive" element={<Receive />} />
-              <Route path="/issue" element={<Issue />} />
-              <Route path="/tnx-report" element={<TnxReport />} />
-              <Route path="/mo-report" element={<MOReport />} />
-              <Route path="/item-list" element={<ItemList />} />
-              <Route path="/item-uom" element={<ItemUOM />} />
-              <Route path="/item-type" element={<ItemType />} />
-              <Route path="/cost-center" element={<CostCenter />} />
-              <Route path="/label" element={<LabelManagement />} />
-              <Route path="/cycle-counting" element={<CycleCounting />} />
+              <Route path="/users" element={<UserManagement />} /><Route path="/requisition" element={<PurchaseRequisition />} /><Route path="/purchase-order" element={<PurchaseOrder />} /><Route path="/supplier" element={<Supplier />} /><Route path="/purchase-report" element={<PurchaseReport />} /><Route path="/inventory" element={<Inventory />} /><Route path="/receive" element={<Receive />} /><Route path="/issue" element={<Issue />} /><Route path="/tnx-report" element={<TnxReport />} /><Route path="/mo-report" element={<MOReport />} /><Route path="/item-list" element={<ItemList />} /><Route path="/item-uom" element={<ItemUOM />} /><Route path="/item-type" element={<ItemType />} /><Route path="/cost-center" element={<CostCenter />} /><Route path="/label" element={<LabelManagement />} />              <Route path="/cycle-counting" element={<CycleCounting />} />
               <Route path="/low-stock" element={hasGranularPermission('low_stock_inventory', 'view') ? <LowStockInventory /> : <Navigate to="/overview" replace />} />
               <Route path="/abc-analysis" element={hasGranularPermission('abc_analysis', 'view') ? <ABCAnalysis /> : <Navigate to="/overview" replace />} />
+              <Route path="/moving-update" element={<MovingUpdate />} />
               <Route path="/reporting-issue-receive" element={hasGranularPermission('issue_report', 'view') ? <ReportingIssueReceive /> : <Navigate to="/overview" replace />} />
               <Route path="/" element={<Navigate to="/overview" replace />} />
             </Routes>

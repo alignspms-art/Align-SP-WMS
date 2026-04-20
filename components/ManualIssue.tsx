@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Trash2, Loader2, Plus, ScanLine, X, Printer, ChevronDown, FileDown } from 'lucide-react';
+import { Home, Trash2, Loader2, Save, Plus, CheckCircle2, ScanLine, X, Printer, ChevronDown, FileDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { getPrintRoot } from '../lib/printRoot';

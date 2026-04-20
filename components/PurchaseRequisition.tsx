@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Home, Edit2, Trash2, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Home, Edit2, Trash2, Loader2, Filter } from 'lucide-react';
 import NewPurchaseRequisition from './NewPurchaseRequisition';
 import PRPreviewModal from './PRPreviewModal';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import ColumnFilter from './ColumnFilter';
 
 const PurchaseRequisition: React.FC = () => {
+  const { user } = useAuth();
   const [view, setView] = useState<'list' | 'new'>('list');
   const [requisitions, setRequisitions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
