@@ -20,11 +20,6 @@ interface MoveOrderItem {
   [key: string]: any;
 }
 
-interface MoveOrderData {
-  items: MoveOrderItem[] | null;
-  created_at: string;
-}
-
 const MovingUpdate: React.FC = () => {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,9 +55,9 @@ const MovingUpdate: React.FC = () => {
       // 4. Collect SKUs that HAVE moved
       const movedSKUs = new Set<string>();
       if (recentMOs) {
-        (recentMOs as unknown as MoveOrderData[]).forEach((mo) => {
+        (recentMOs as any[]).forEach((mo: any) => {
           if (mo.items && Array.isArray(mo.items)) {
-            mo.items.forEach((item) => {
+            mo.items.forEach((item: any) => {
               if (item.sku) {
                 movedSKUs.add(item.sku);
               }
@@ -72,7 +67,7 @@ const MovingUpdate: React.FC = () => {
       }
 
       // 5. Filter items that have NOT moved
-      const nonMovingItems = (allItems as InventoryItem[] | null)?.filter((item) => {
+      const nonMovingItems = (allItems as any[] | null)?.filter((item: any) => {
         const matchesSearch = !searchTerm || 
           item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
           item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
