@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Home, Search, FileDown, Loader2, Filter, RefreshCw } from "lucide-react";
-import * as XLSX from "xlsx";
-import { supabase } from "../lib/supabase";
+import React, { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
+import { Home, Search, FileDown, Loader2, Filter, RefreshCw } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface InventoryItem {
   id: string;
