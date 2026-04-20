@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Filter, ChevronRight, Loader2 } from 'lucide-react';
+import { Home, Filter, ChevronRight, Loader2, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface PendingPRItem {

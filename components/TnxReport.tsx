@@ -1,6 +1,6 @@
 
-import React, { useState, useMemo } from 'react';
-import { Home, FileSpreadsheet, Inbox, ChevronDown, Search, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Home, FileSpreadsheet, Filter, Inbox, ChevronDown, Search, Loader2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { supabase } from '../lib/supabase';
 import TnxDetailsModal from './TnxDetailsModal';
