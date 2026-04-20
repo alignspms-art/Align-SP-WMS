@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, User, Loader2, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { X, Clock, Loader2, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface HistoryEntry {

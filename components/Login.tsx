@@ -31,7 +31,7 @@ const Login: React.FC = () => {
       if (!result.success) {
         setErrorMsg(result.message || "Invalid credentials");
       }
-    } catch (err) {
+    } catch {
       setErrorMsg("Authentication service unavailable");
     } finally {
       setLoading(false);

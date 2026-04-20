@@ -61,7 +61,7 @@ const MakeGRNForm: React.FC<MakeGRNFormProps> = ({ selectedItems, onClose, onSub
         } else {
           setGrnId('4000000001');
         }
-      } catch (_) {
+      } catch {
         setGrnId('4000000001');
       }
     };

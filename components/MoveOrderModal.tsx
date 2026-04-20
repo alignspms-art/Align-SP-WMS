@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Plus, ScanLine, Loader2, Search, Printer, FileDown } from 'lucide-react';
+import { X, Trash2, Plus, ScanLine, Loader2, Printer, FileDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import ScannerModal from './ScannerModal';

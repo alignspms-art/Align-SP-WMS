@@ -48,7 +48,7 @@ const ManualGRN: React.FC<ManualGRNProps> = ({ onBack, onSubmit }) => {
         } else {
           setGrnId('4000000001');
         }
-      } catch (_) {
+      } catch {
         setGrnId('4000000001');
       }
     };

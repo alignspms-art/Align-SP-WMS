@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Home, Filter, Search, ChevronLeft, ChevronRight, ChevronDown, Loader2, Inbox, Eye, Printer, X as CloseIcon, FileDown } from 'lucide-react';
+import { Home, Search, ChevronLeft, ChevronRight, ChevronDown, Loader2, Inbox, Eye, Printer, X as CloseIcon, FileDown } from 'lucide-react';
 import MaterialsMovementForm from './MaterialsMovementForm';
 import ManualIssue from './ManualIssue';
 import { supabase } from '../lib/supabase';
@@ -138,13 +138,13 @@ const Issue: React.FC = () => {
     else setSelectedIds(new Set(issues.map(i => i.id)));
   };
 
-  const handleMOIssueSubmit = (data: any) => {
+  const handleMOIssueSubmit = () => {
     setView('list');
     setSelectedIds(new Set());
     fetchApprovedMOs();
   };
 
-  const handleManualIssueSubmit = (data: any) => {
+  const handleManualIssueSubmit = () => {
     setView('list');
     fetchApprovedMOs();
   };

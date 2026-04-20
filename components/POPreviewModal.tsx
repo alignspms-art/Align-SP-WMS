@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Printer, FileSpreadsheet, CheckCircle, Save, ThumbsUp, Loader2, FileDown } from 'lucide-react';
+import { X, Printer, FileSpreadsheet, Save, ThumbsUp, Loader2, FileDown } from 'lucide-react';
 import POPrintTemplate from './POPrintTemplate';
 import * as XLSX from 'xlsx';
 import { supabase } from '../lib/supabase';
@@ -14,7 +14,7 @@ interface POPreviewModalProps {
 }
 
 const POPreviewModal: React.FC<POPreviewModalProps> = ({ po: initialPo, onClose }) => {
-  const { user, hasGranularPermission } = useAuth();
+  const { hasGranularPermission } = useAuth();
   const [po, setPo] = useState<any>(initialPo);
   const [isSaving, setIsSaving] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);

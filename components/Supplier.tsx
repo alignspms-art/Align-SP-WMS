@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Home, Search, Edit2, ChevronDown, X, Loader2, Filter } from 'lucide-react';
+import { Home, Search, Edit2, ChevronDown, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ColumnFilter from './ColumnFilter';
 

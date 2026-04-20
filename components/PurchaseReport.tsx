@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Home, FileSpreadsheet, Inbox, Filter, ChevronDown, Loader2, Search } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Home, FileSpreadsheet, Inbox, ChevronDown, Loader2, Search } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { supabase } from '../lib/supabase';
 import ColumnFilter from './ColumnFilter';

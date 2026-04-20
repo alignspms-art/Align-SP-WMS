@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Printer, FileSpreadsheet, FileText, CheckCircle2, Edit2, Loader2, Save, ThumbsUp, FileDown } from 'lucide-react';
+import { X, Printer, FileSpreadsheet, CheckCircle2, Loader2, Save, ThumbsUp, FileDown } from 'lucide-react';
 import PRPrintTemplate from './PRPrintTemplate';
 import * as XLSX from 'xlsx';
 import { supabase } from '../lib/supabase';
