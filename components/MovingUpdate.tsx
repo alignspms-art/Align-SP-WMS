@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { supabase } from "../lib/supabase";
+import { supabase } from '../lib/supabase';
 import { Home, Search, FileDown, Loader2, Filter, RefreshCw } from "lucide-react";
 import * as XLSX from "xlsx";
 
