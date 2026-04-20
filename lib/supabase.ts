@@ -3,7 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 // Helper to safely get environment variables in Vite
 const getEnv = (key: string): string => {
   try {
-    // @ts-expect-error - import.meta is a Vite-specific meta property
     const env = import.meta.env;
     return env[key] || "";
   } catch {
