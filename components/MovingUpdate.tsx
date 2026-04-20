@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
-import { Home, Search, FileDown, Loader2, Filter, RefreshCw } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import React, { useState, useEffect, useCallback } from "react";
+import { supabase } from "../lib/supabase";
+import { Home, Search, FileDown, Loader2, Filter, RefreshCw } from "lucide-react";
+import * as XLSX from "xlsx";
 
 interface InventoryItem {
   id: string;
@@ -13,11 +13,6 @@ interface InventoryItem {
   type: string;
   on_hand_stock: number;
   last_issued: string | null;
-}
-
-interface MoveOrderItem {
-  sku?: string;
-  [key: string]: any;
 }
 
 const MovingUpdate: React.FC = () => {
@@ -67,7 +62,7 @@ const MovingUpdate: React.FC = () => {
       }
 
       // 5. Filter items that have NOT moved
-      const nonMovingItems = (allItems as any[] | null)?.filter((item: any) => {
+      const nonMovingItems = (allItems as InventoryItem[] | null)?.filter((item: InventoryItem) => {
         const matchesSearch = !searchTerm || 
           item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
           item.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||

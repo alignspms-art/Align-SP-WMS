@@ -1,17 +1,17 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 // Helper to safely get environment variables in Vite
 const getEnv = (key: string): string => {
   try {
     const meta = import.meta as any;
-    return (meta.env && meta.env[key]) || '';
+    return (meta.env && meta.env[key]) || "";
   } catch {
-    return '';
+    return "";
   }
 };
 
-const supabaseUrl = getEnv('VITE_SUPABASE_URL') || 'https://ltnnrizdxiekcfnaxkpq.supabase.co';
-const supabaseKey = getEnv('VITE_SUPABASE_KEY') || 'sb_publishable_AiUwf7Mr_OxURCGS0kf4IA_ob9PgYko';
+const supabaseUrl = getEnv("VITE_SUPABASE_URL") || "https://ltnnrizdxiekcfnaxkpq.supabase.co";
+const supabaseKey = getEnv("VITE_SUPABASE_KEY") || "sb_publishable_AiUwf7Mr_OxURCGS0kf4IA_ob9PgYko";
 
 if (!supabaseUrl || !supabaseKey) {
   console.error("Supabase credentials missing. Ensure VITE_SUPABASE_URL and VITE_SUPABASE_KEY are set.");
