@@ -1,0 +1,14 @@
+services:
+  - type: static
+    name: align-system-frontend
+    buildCommand: npm install --legacy-peer-deps --force && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_SUPABASE_URL
+        value: https://ltnnrizdxiekcfnaxkpq.supabase.co
+      - key: VITE_SUPABASE_KEY
+        value: sb_publishable_AiUwf7Mr_OxURCGS0kf4IA_ob9PgYko
