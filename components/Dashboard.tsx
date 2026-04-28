@@ -153,46 +153,6 @@ const KPICard: React.FC<{ label: string; value: string; subValue?: string }> = (
   </div>
 );
 
-const LiquidGauge: React.FC<{ label: string; value: number; subLabel: string; color?: string; colorLight?: string }> = ({ label, value, subLabel, color = "#2589ff", colorLight = "#60a5fa" }) => {
-  return (
-    <div className="bg-white p-8 rounded-2xl border border-gray-100 flex flex-col items-center transition-all hover:shadow-lg">
-      <h3 className="text-[12px] font-black text-[#2d808e] uppercase tracking-widest mb-10">{label} ({subLabel})</h3>
-      <div className="relative w-48 h-48 rounded-full border-[6px] border-[#f0f4f8] overflow-hidden flex items-center justify-center bg-white shadow-inner">
-        {/* Waving Liquid */}
-        <div 
-          className="absolute bottom-0 left-0 w-full transition-all duration-1000 ease-in-out z-10"
-          style={{ height: `${value}%` }}
-        >
-          {/* Back Wave */}
-          <div className="absolute top-0 left-0 w-[200%] h-20 -translate-y-1/2 opacity-30 animate-water-back" style={{ fill: colorLight }}>
-            <svg viewBox="0 0 1000 100" preserveAspectRatio="none" className="w-full h-full">
-              <path d="M0,50 C150,0 350,100 500,50 C650,0 850,100 1000,50 L1000,100 L0,100 Z" />
-            </svg>
-          </div>
-          {/* Front Wave */}
-          <div className="absolute top-0 left-0 w-[200%] h-20 -translate-y-1/2 opacity-80 animate-water-front" style={{ fill: color }}>
-            <svg viewBox="0 0 1000 100" preserveAspectRatio="none" className="w-full h-full">
-              <path d="M0,50 C150,100 350,0 500,50 C650,100 850,0 1000,50 L1000,100 L0,100 Z" />
-            </svg>
-          </div>
-          {/* Solid Liquid Fill */}
-          <div className="w-full h-full" style={{ backgroundColor: color }}></div>
-        </div>
-        
-        {/* Reflection Highlight */}
-        <div className="absolute inset-0 rounded-full pointer-events-none z-20 shadow-[inset_0_10px_20px_rgba(255,255,255,0.3)]"></div>
-        
-        {/* Percentage Text */}
-        <div className="relative z-30 flex flex-col items-center">
-          <span className="text-5xl font-black text-gray-800 drop-shadow-[0_2px_4px_rgba(255,255,255,0.8)] tracking-tighter">
-            {value}%
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const DashboardOverview: React.FC<{ 
   onCheckStock: () => void; 
   onMoveOrder: () => void; 
@@ -215,8 +175,7 @@ const DashboardOverview: React.FC<{
   const [latestGRNs, setLatestGRNs] = useState<any[]>([]);
   const [latestPOs, setLatestPOs] = useState<any[]>([]);
   const [stockTypes, setStockTypes] = useState<any[]>([]);
-  const [dieselStock, setDieselStock] = useState(41);
-  const [octaneStock, setOctaneStock] = useState(57);
+  const [monthlyCCStats, setMonthlyCCStats] = useState<any[]>([]);
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
   const [costCenterData, setCostCenterData] = useState<any[]>([]);
   const [weeklyGrnData, setWeeklyGrnData] = useState<any[]>([]);
@@ -228,13 +187,16 @@ const DashboardOverview: React.FC<{
   const [valuationMonth, setValuationMonth] = useState('ALL');
 
   const [stats, setStats] = useState({
-    todayOrderQty: '0', todayOrderCount: '0',
-    lastDayOrderQty: '0', lastDayOrderCount: '0',
-    weeklyOrderQty: '0', weeklyOrderCount: '0',
-    monthlyOrderQty: '0', monthlyOrderCount: '0',
-    weeklyPrQty: '0', weeklyPrCount: '0',
-    monthlyPrQty: '0', monthlyPrCount: '0'
+    todayOrderQty: '0', todayOrderCount: '0', todayOrderValue: '0',
+    lastDayOrderQty: '0', lastDayOrderCount: '0', lastDayOrderValue: '0',
+    weeklyOrderQty: '0', weeklyOrderCount: '0', weeklyOrderValue: '0',
+    monthlyOrderQty: '0', monthlyOrderCount: '0', monthlyOrderValue: '0',
+    weeklyPrQty: '0', weeklyPrCount: '0', weeklyPrValue: '0',
+    monthlyPrQty: '0', monthlyPrCount: '0', monthlyPrValue: '0'
   });
+
+  const [selectedFilterMonth, setSelectedFilterMonth] = useState(new Date().getMonth());
+  const [selectedFilterYear, setSelectedFilterYear] = useState(new Date().getFullYear());
 
   const canViewPrApprovals = hasGranularPermission('pr_approval', 'view') || hasGranularPermission('requisition', 'approved');
   const canViewPoApprovals = hasGranularPermission('po_approval', 'view') || hasGranularPermission('purchase_order', 'approved');
@@ -254,8 +216,6 @@ const DashboardOverview: React.FC<{
   const canViewChartPo = hasGranularPermission('dash_chart_weekly_po', 'view');
   const canViewChartGrn = hasGranularPermission('dash_chart_weekly_grn', 'view');
   const canViewChartSegmentation = hasGranularPermission('dash_chart_stock_segmentation', 'view');
-  const canViewGaugeDiesel = hasGranularPermission('dash_gauge_diesel', 'view');
-  const canViewGaugeOctane = hasGranularPermission('dash_gauge_octane', 'view');
   const canViewTableMo = hasGranularPermission('dash_table_latest_mo', 'view');
   const canViewTablePr = hasGranularPermission('dash_table_latest_pr', 'view');
   const canViewTablePo = hasGranularPermission('dash_table_latest_po', 'view');
@@ -290,14 +250,51 @@ const DashboardOverview: React.FC<{
       const types: Record<string, number> = {};
       items.forEach(item => { const type = item.type || 'Other'; types[type] = (types[type] || 0) + 1; });
       setStockTypes(Object.entries(types).map(([name, value]) => ({ name, value })));
-      const dieselItem = items.find(i => i.sku === '4492' || i.sku === '4457');
-      const octaneItem = items.find(i => i.sku === '3121');
-      if (dieselItem) setDieselStock(Math.min(100, Math.round((dieselItem.on_hand_stock / 10000) * 100)));
-      if (octaneItem) setOctaneStock(Math.min(100, Math.round((octaneItem.on_hand_stock / 10000) * 100)));
+    }
+
+    const startOfRange = new Date(selectedFilterYear, selectedFilterMonth, 1);
+    const endOfRange = new Date(selectedFilterYear, selectedFilterMonth + 1, 0, 23, 59, 59, 999);
+
+    const { data: tnxData } = await supabase
+      .from('transactions')
+      .select('*')
+      .gte('created_at', startOfRange.toISOString())
+      .lte('created_at', endOfRange.toISOString());
+
+    if (tnxData && items) {
+      const itemMap = new Map(items.map(i => [i.sku, i]));
+      const ccAgg: Record<string, { issue: number, grn: number }> = {};
+      tnxData.forEach(t => {
+        const dept = t.department || 'N/A';
+        const itemInfo = itemMap.get(t.item_sku);
+        const realtimePrice = itemInfo ? (Number(itemInfo.avg_price) || Number(itemInfo.last_price) || 0) : 0;
+        
+        if (!ccAgg[dept]) ccAgg[dept] = { issue: 0, grn: 0 };
+        const cost = (Number(t.quantity) || 0) * realtimePrice;
+        if (t.type === 'Issue') {
+          ccAgg[dept].issue += cost;
+        } else if (t.type === 'Receive') {
+          ccAgg[dept].grn += cost;
+        }
+      });
+      setMonthlyCCStats(Object.entries(ccAgg)
+        .map(([name, stats]) => ({ name, ...stats }))
+        .sort((a, b) => (b.issue + b.grn) - (a.issue + a.grn))
+      );
     }
 
     const { data: moveOrders } = await supabase.from('move_orders').select('*').in('status', ['Approved', 'Completed']).order('created_at', { ascending: true });
-    if (moveOrders) {
+    if (moveOrders && items) {
+      const itemMap = new Map(items.map(i => [i.sku, i]));
+      
+      const getRealtimeValue = (mo: any) => {
+        return (mo.items || []).reduce((acc: number, item: any) => {
+          const itemInfo = itemMap.get(item.sku);
+          const price = itemInfo ? (Number(itemInfo.avg_price) || Number(itemInfo.last_price) || 0) : 0;
+          return acc + ((Number(item.issuedQty) || Number(item.reqQty) || 0) * price);
+        }, 0);
+      };
+
       // Daily Charts Filter
       const dStart = new Date(dailyStartDate);
       const dEnd = new Date(dailyEndDate);
@@ -313,7 +310,7 @@ const DashboardOverview: React.FC<{
       filteredMOs.forEach(mo => {
         const dept = mo.department || 'Unknown';
         const qty = mo.items?.reduce((acc: number, item: any) => acc + (Number(item.reqQty) || 0), 0) || 0;
-        const val = Number(mo.total_value) || 0;
+        const val = getRealtimeValue(mo);
         if (!costCenterAgg[dept]) costCenterAgg[dept] = { qty: 0, value: 0 };
         costCenterAgg[dept].qty += qty;
         costCenterAgg[dept].value += val;
@@ -335,7 +332,7 @@ const DashboardOverview: React.FC<{
         const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit' }) + '-' + d.toLocaleDateString('en-GB', { weekday: 'short' });
         const dayOrders = moveOrders.filter(mo => new Date(mo.created_at).toDateString() === d.toDateString());
         const qty = dayOrders.reduce((acc, mo) => acc + (mo.items?.reduce((iAcc: number, item: any) => iAcc + (Number(item.reqQty) || 0), 0) || 0), 0);
-        const value = dayOrders.reduce((acc, mo) => acc + (Number(mo.total_value) || 0), 0);
+        const value = dayOrders.reduce((acc, mo) => acc + getRealtimeValue(mo), 0);
         dailyAgg.push({ name: dateStr, qty, value });
       }
       setWeeklyData(dailyAgg);
@@ -349,7 +346,14 @@ const DashboardOverview: React.FC<{
           const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit' }) + '-' + d.toLocaleDateString('en-GB', { weekday: 'short' });
           const dayGrns = allGrns.filter(g => new Date(g.created_at).toDateString() === d.toDateString());
           const qty = dayGrns.reduce((acc, g) => acc + (g.items?.reduce((iAcc: number, item: any) => iAcc + (Number(item.grnQty) || 0), 0) || 0), 0);
-          const value = dayGrns.reduce((acc, g) => acc + (g.items?.reduce((iAcc: number, item: any) => iAcc + ((Number(item.grnQty) || 0) * (Number(item.grnPrice) || 0)), 0) || 0), 0);
+          const value = dayGrns.reduce((acc, g) => {
+            const grnVal = g.items?.reduce((iAcc: number, item: any) => {
+              const itemInfo = itemMap.get(item.sku);
+              const price = itemInfo ? (Number(itemInfo.avg_price) || Number(itemInfo.last_price) || 0) : (Number(item.grnPrice) || 0);
+              return iAcc + ((Number(item.grnQty) || 0) * price);
+            }, 0) || 0;
+            return acc + grnVal;
+          }, 0);
           dailyGrnAgg.push({ name: dateStr, qty, value });
         }
         setWeeklyGrnData(dailyGrnAgg);
@@ -361,7 +365,7 @@ const DashboardOverview: React.FC<{
           const value = moveOrders.filter(mo => {
             const d = new Date(mo.created_at);
             return d.getFullYear().toString() === valuationYear && d.getMonth() === idx;
-          }).reduce((acc, mo) => acc + (Number(mo.total_value) || 0), 0);
+          }).reduce((acc, mo) => acc + getRealtimeValue(mo), 0);
           return { name: month, value };
         }));
       } else {
@@ -372,7 +376,7 @@ const DashboardOverview: React.FC<{
           const d = new Date(Number(valuationYear), monthIdx, i);
           const dateStr = i.toString();
           const dayValue = moveOrders.filter(mo => new Date(mo.created_at).toDateString() === d.toDateString())
-            .reduce((acc, mo) => acc + (Number(mo.total_value) || 0), 0);
+            .reduce((acc, mo) => acc + getRealtimeValue(mo), 0);
           dailyMonthAgg.push({ name: dateStr, value: dayValue });
         }
         setMonthlyData(dailyMonthAgg);
@@ -384,24 +388,47 @@ const DashboardOverview: React.FC<{
     const { data: allPr } = await supabase.from('requisitions').select('items, created_at');
     
     const sumQty = (list: any[], dateLimit: Date) => {
-      let qty = 0; let count = 0;
+      let qty = 0; let count = 0; let value = 0;
       list?.filter(entry => new Date(entry.created_at) >= dateLimit).forEach(entry => {
-        count++; (entry.items || []).forEach((item: any) => qty += Number(item.poQty || item.reqQty || 0));
+        count++; 
+        (entry.items || []).forEach((item: any) => {
+          const itemQty = Number(item.poQty || item.reqQty || item.issuedQty || 0);
+          qty += itemQty;
+          
+          if (items) {
+            const itemMap = new Map(items.map(i => [i.sku, i]));
+            const itemInfo = itemMap.get(item.sku);
+            const price = itemInfo ? (Number(itemInfo.avg_price) || Number(itemInfo.last_price) || 0) : 0;
+            value += itemQty * price;
+          }
+        });
       });
-      return { qty: qty > 1000 ? Number(qty/1000).toFixed(1) + 'K' : qty.toString(), count: count.toString() };
+      const formatValue = (v: number) => v > 1000 ? (v/1000).toFixed(1) + 'K' : v.toFixed(0);
+      return { 
+        qty: qty > 1000 ? Number(qty/1000).toFixed(1) + 'K' : qty.toString(), 
+        count: count.toString(),
+        value: formatValue(value)
+      };
     };
 
     const combinedOrders = [...(allPo || []), ...(moveOrders || [])];
 
+    const todayStats = sumQty(combinedOrders, today);
+    const lastDayStats = sumQty(combinedOrders, new Date(today.getTime() - 86400000));
+    const weeklyStats = sumQty(combinedOrders, new Date(today.getTime() - 7*86400000));
+    const monthlyStats = sumQty(combinedOrders, new Date(today.getTime() - 30*86400000));
+    const weeklyPrStats = sumQty(allPr || [], new Date(today.getTime() - 7*86400000));
+    const monthlyPrStats = sumQty(allPr || [], new Date(today.getTime() - 30*86400000));
+
     setStats({
-      todayOrderQty: sumQty(combinedOrders, today).qty, todayOrderCount: sumQty(combinedOrders, today).count,
-      lastDayOrderQty: sumQty(combinedOrders, new Date(today.getTime() - 86400000)).qty, lastDayOrderCount: sumQty(combinedOrders, new Date(today.getTime() - 86400000)).count,
-      weeklyOrderQty: sumQty(combinedOrders, new Date(today.getTime() - 7*86400000)).qty, weeklyOrderCount: sumQty(combinedOrders, new Date(today.getTime() - 7*86400000)).count,
-      monthlyOrderQty: sumQty(combinedOrders, new Date(today.getTime() - 30*86400000)).qty, monthlyOrderCount: sumQty(combinedOrders, new Date(today.getTime() - 30*86400000)).count,
-      weeklyPrQty: sumQty(allPr || [], new Date(today.getTime() - 7*86400000)).qty, weeklyPrCount: sumQty(allPr || [], new Date(today.getTime() - 7*86400000)).count,
-      monthlyPrQty: sumQty(allPr || [], new Date(today.getTime() - 30*86400000)).qty, monthlyPrCount: sumQty(allPr || [], new Date(today.getTime() - 30*86400000)).count
+      todayOrderQty: todayStats.qty, todayOrderCount: todayStats.count, todayOrderValue: todayStats.value,
+      lastDayOrderQty: lastDayStats.qty, lastDayOrderCount: lastDayStats.count, lastDayOrderValue: lastDayStats.value,
+      weeklyOrderQty: weeklyStats.qty, weeklyOrderCount: weeklyStats.count, weeklyOrderValue: weeklyStats.value,
+      monthlyOrderQty: monthlyStats.qty, monthlyOrderCount: monthlyStats.count, monthlyOrderValue: monthlyStats.value,
+      weeklyPrQty: weeklyPrStats.qty, weeklyPrCount: weeklyPrStats.count, weeklyPrValue: weeklyPrStats.value,
+      monthlyPrQty: monthlyPrStats.qty, monthlyPrCount: monthlyPrStats.count, monthlyPrValue: monthlyPrStats.value
     });
-  }, [dailyStartDate, dailyEndDate, valuationYear, valuationMonth]);
+  }, [dailyStartDate, dailyEndDate, valuationYear, valuationMonth, selectedFilterMonth, selectedFilterYear]);
 
   useEffect(() => {
     const timer = setInterval(() => setDateTime(new Date()), 1000);
@@ -417,7 +444,7 @@ const DashboardOverview: React.FC<{
   };
 
   const formatCurrency = (val: number) => {
-    return (val || 0).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+    return (val || 0).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + " BDT";
   };
 
   return (
@@ -635,9 +662,124 @@ const DashboardOverview: React.FC<{
         )}
       </div>
 
+      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-1">
+        <h3 className="text-xs font-black text-[#2d808e] uppercase tracking-widest">Monthly Cost Center Analytics Filter</h3>
+        <div className="flex items-center gap-2">
+          <select 
+            value={selectedFilterYear} 
+            onChange={(e) => setSelectedFilterYear(Number(e.target.value))} 
+            className="text-[10px] border border-gray-200 rounded-lg px-2 py-1 focus:ring-1 focus:ring-[#2d808e] outline-none font-bold"
+          >
+            {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <select 
+            value={selectedFilterMonth} 
+            onChange={(e) => setSelectedFilterMonth(Number(e.target.value))} 
+            className="text-[10px] border border-gray-200 rounded-lg px-2 py-1 focus:ring-1 focus:ring-[#2d808e] outline-none font-bold"
+          >
+            {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, i) => (
+              <option key={m} value={i}>{m.toUpperCase()}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {canViewGaugeDiesel && <LiquidGauge label="DIESEL" value={dieselStock} subLabel="4457" color="#2d808e" colorLight="#60a5fa" />}
-        {canViewGaugeOctane && <LiquidGauge label="OCTANE" value={octaneStock} subLabel="3121" color="#2589ff" colorLight="#8ebfff" />}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 flex flex-col shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xs font-black text-[#2d808e] uppercase tracking-widest">Monthly Issue by Cost Center</h3>
+            <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">{new Date(selectedFilterYear, selectedFilterMonth).toLocaleString('en-GB', { month: 'short' })}</span>
+          </div>
+          <div className="flex-1 flex flex-col">
+            <div className="h-40 w-full mb-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie 
+                    data={monthlyCCStats.filter(s => s.issue > 0).sort((a, b) => b.issue - a.issue).slice(0, 5)} 
+                    innerRadius={40} 
+                    outerRadius={60} 
+                    paddingAngle={4} 
+                    dataKey="issue"
+                  >
+                    {monthlyCCStats.filter(s => s.issue > 0).sort((a, b) => b.issue - a.issue).slice(0, 5).map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), 'Value']}
+                    contentStyle={{ fontSize: '10px', borderRadius: '8px' }} 
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="space-y-2 overflow-y-auto max-h-[120px] scrollbar-thin pr-2">
+              {monthlyCCStats.filter(s => s.issue > 0).sort((a, b) => b.issue - a.issue).slice(0, 5).map((stat, idx) => {
+                const totalIssue = monthlyCCStats.reduce((acc, curr) => acc + (curr.issue || 0), 0);
+                const percent = totalIssue > 0 ? ((stat.issue / totalIssue) * 100).toFixed(0) : 0;
+                return (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 rounded-full border border-gray-100" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                      <span className="text-[10px] font-black text-gray-700 uppercase truncate max-w-[100px]">{stat.name}</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-blue-600">{percent}%</span>
+                  </div>
+                );
+              })}
+              {monthlyCCStats.filter(s => s.issue > 0).length === 0 && (
+                <div className="h-full flex items-center justify-center text-gray-300 py-10 italic text-[10px]">No Issue Data</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 flex flex-col shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xs font-black text-[#2d808e] uppercase tracking-widest">Monthly GRN by Cost Center</h3>
+            <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">{new Date(selectedFilterYear, selectedFilterMonth).toLocaleString('en-GB', { month: 'short' })}</span>
+          </div>
+          <div className="flex-1 flex flex-col">
+            <div className="h-40 w-full mb-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie 
+                    data={monthlyCCStats.filter(s => s.grn > 0).sort((a, b) => b.grn - a.grn).slice(0, 5)} 
+                    innerRadius={40} 
+                    outerRadius={60} 
+                    paddingAngle={4} 
+                    dataKey="grn"
+                  >
+                    {monthlyCCStats.filter(s => s.grn > 0).sort((a, b) => b.grn - a.grn).slice(0, 5).map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), 'Value']}
+                    contentStyle={{ fontSize: '10px', borderRadius: '8px' }} 
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="space-y-2 overflow-y-auto max-h-[120px] scrollbar-thin pr-2">
+              {monthlyCCStats.filter(s => s.grn > 0).sort((a, b) => b.grn - a.grn).slice(0, 5).map((stat, idx) => {
+                const totalGrn = monthlyCCStats.reduce((acc, curr) => acc + (curr.grn || 0), 0);
+                const percent = totalGrn > 0 ? ((stat.grn / totalGrn) * 100).toFixed(0) : 0;
+                return (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 rounded-full border border-gray-100" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                      <span className="text-[10px] font-black text-gray-700 uppercase truncate max-w-[100px]">{stat.name}</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-600">{percent}%</span>
+                  </div>
+                );
+              })}
+              {monthlyCCStats.filter(s => s.grn > 0).length === 0 && (
+                <div className="h-full flex items-center justify-center text-gray-300 py-10 italic text-[10px]">No GRN Data</div>
+              )}
+            </div>
+          </div>
+        </div>
         {canViewChartSegmentation && (
           <div className="bg-white p-6 rounded-2xl border border-gray-100 flex flex-col shadow-sm">
             <h3 className="text-xs font-bold text-[#2d808e] uppercase mb-6 text-center">Stock Segmentation</h3>
